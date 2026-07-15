@@ -1,85 +1,66 @@
-// api/auth/signup.js
-// Stores users in Vercel KV (Redis). Requires KV env vars:
-//   KV_REST_API_URL, KV_REST_API_TOKEN (auto-set when you link a KV store in Vercel dashboard)
-// Password hashed with SHA-256 + salt
+/**
+ * POST /api/auth/signup
+ * Body: { firstName, lastName?, email, password, promoConsent? }
+ * Returns: { token, user }
+ */
 
-import { createHash, randomBytes } from 'crypto';
-
-const KV_URL   = process.env.KV_REST_API_URL;
-const KV_TOKEN = process.env.KV_REST_API_TOKEN;
-const JWT_SECRET = process.env.JWT_SECRET || 'voicecast-dev-secret-change-in-prod';
-
-async function kvGet(key) {
-  const res = await fetch(`${KV_URL}/get/${encodeURIComponent(key)}`, {
-    headers: { Authorization: `Bearer ${KV_TOKEN}` },
-  });
-  const json = await res.json();
-  return json.result ?? null;
-}
-
-async function kvSet(key, value) {
-  await fetch(`${KV_URL}/set/${encodeURIComponent(key)}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${KV_TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(value),
-  });
-}
-
-function hashPassword(password, salt) {
-  return createHash('sha256').update(salt + password + JWT_SECRET).digest('hex');
-}
-
-function makeJwt(payload) {
-  const header  = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).replace(/=/g,'');
-  const body    = btoa(JSON.stringify({ ...payload, iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000) + 60*60*24*30 })).replace(/=/g,'');
-  const sig     = btoa(createHash('sha256').update(`${header}.${body}${JWT_SECRET}`).digest('hex')).replace(/=/g,'');
-  return `${header}.${body}.${sig}`;
-}
+import { getDb }                           from '../../lib/mongodb.js';
+import { hashPassword, signToken, setCors } from '../../lib/auth.js';
 
 export const config = { api: { bodyParser: true } };
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCors(res, 'POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed.' });
 
   const { firstName, lastName = '', email, password, promoConsent = false } = req.body || {};
 
-  if (!firstName?.trim()) return res.status(400).json({ error: 'First name is required.' });
-  if (!email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!firstName?.trim())
+    return res.status(400).json({ error: 'First name is required.' });
+
+  const emailClean = email?.toLowerCase().trim();
+  if (!emailClean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailClean))
     return res.status(400).json({ error: 'A valid email address is required.' });
-  }
-  if (!password || password.length < 8) {
+
+  if (!password || password.length < 8)
     return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+
+  let db;
+  try {
+    db = await getDb();
+  } catch (err) {
+    console.error('[signup] DB connection failed:', err.message);
+    return res.status(503).json({ error: 'Database unavailable. Please check MONGODB_URI in Vercel project settings.' });
   }
 
-  if (!KV_URL || !KV_TOKEN) {
-    return res.status(503).json({ error: 'Database not configured. Please connect a Vercel KV store in the Vercel dashboard under Storage.' });
-  }
-
-  const emailKey = `user:email:${email.toLowerCase().trim()}`;
-  const existing = await kvGet(emailKey);
+  const users = db.collection('users');
+  const existing = await users.findOne({ email: emailClean }, { projection: { _id: 1 } });
   if (existing) return res.status(409).json({ error: 'An account with this email already exists.' });
 
-  const salt   = randomBytes(16).toString('hex');
-  const pwHash = hashPassword(password, salt);
-  const userId = randomBytes(12).toString('hex');
-  const now    = new Date().toISOString();
-
-  const user = {
-    id: userId, firstName: firstName.trim(), lastName: lastName.trim(),
-    email: email.toLowerCase().trim(), pwHash, salt,
-    promoConsent: Boolean(promoConsent), createdAt: now, updatedAt: now,
+  const passwordHash = await hashPassword(password);
+  const now = new Date();
+  const doc = {
+    firstName: firstName.trim(), lastName: lastName.trim(),
+    email: emailClean, passwordHash,
+    promoConsent: Boolean(promoConsent),
+    createdAt: now, updatedAt: now, lastLoginAt: null,
   };
 
-  await kvSet(`user:id:${userId}`, JSON.stringify(user));
-  await kvSet(emailKey, userId);
+  let result;
+  try {
+    result = await users.insertOne(doc);
+  } catch (err) {
+    if (err.code === 11000) return res.status(409).json({ error: 'An account with this email already exists.' });
+    console.error('[signup] insertOne failed:', err.message);
+    return res.status(500).json({ error: 'Failed to create account. Please try again.' });
+  }
 
-  const token = makeJwt({ sub: userId, email: user.email, name: user.firstName });
+  const userId = result.insertedId.toString();
+  const token  = signToken({ sub: userId, email: emailClean, name: doc.firstName });
+
   return res.status(201).json({
     token,
-    user: { id: userId, email: user.email, firstName: user.firstName, lastName: user.lastName },
+    user: { id: userId, email: emailClean, firstName: doc.firstName, lastName: doc.lastName, promoConsent: doc.promoConsent, createdAt: now.toISOString() },
   });
 }
