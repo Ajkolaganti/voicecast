@@ -4,9 +4,9 @@
  * Returns: { token, user }
  */
 
-import { ObjectId }                                from 'mongodb';
-import { getDb }                                   from '../../lib/mongodb.js';
-import { verifyPassword, signToken, setCors }      from '../../lib/auth.js';
+import { FieldValue }                             from 'firebase-admin/firestore';
+import { getDb, COLLECTIONS }                    from '../../lib/firebase.js';
+import { verifyPassword, signToken, setCors }    from '../../lib/auth.js';
 
 export const config = { api: { bodyParser: true } };
 
@@ -22,30 +22,33 @@ export default async function handler(req, res) {
   const emailClean = email.toLowerCase().trim();
 
   let db;
-  try {
-    db = await getDb();
-  } catch (err) {
-    console.error('[login] DB connection failed:', err.message);
-    return res.status(503).json({ error: 'Database unavailable. Please check MONGODB_URI in Vercel project settings.' });
+  try { db = getDb(); } catch (err) {
+    return res.status(503).json({ error: 'Firebase is not configured. Check Vercel environment variables.' });
   }
 
-  const user = await db.collection('users').findOne({ email: emailClean });
-  if (!user) return res.status(401).json({ error: 'Incorrect email or password.' });
+  // Resolve uid from email index
+  const emailKey  = emailClean.replace(/\./g, ',');
+  const emailSnap = await db.collection('emailIndex').doc(emailKey).get();
+  if (!emailSnap.exists)
+    return res.status(401).json({ error: 'Incorrect email or password.' });
 
+  const { uid } = emailSnap.data();
+  const userSnap = await db.collection(COLLECTIONS.USERS).doc(uid).get();
+  if (!userSnap.exists)
+    return res.status(401).json({ error: 'Incorrect email or password.' });
+
+  const user  = userSnap.data();
   const valid = await verifyPassword(password, user.passwordHash);
-  if (!valid)  return res.status(401).json({ error: 'Incorrect email or password.' });
+  if (!valid) return res.status(401).json({ error: 'Incorrect email or password.' });
 
   // Fire-and-forget lastLoginAt update
-  db.collection('users').updateOne(
-    { _id: user._id },
-    { $set: { lastLoginAt: new Date(), updatedAt: new Date() } }
-  ).catch(err => console.error('[login] lastLoginAt update:', err.message));
+  db.collection(COLLECTIONS.USERS).doc(uid)
+    .update({ lastLoginAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() })
+    .catch(err => console.error('[login] lastLoginAt update:', err.message));
 
-  const userId = user._id.toString();
-  const token  = signToken({ sub: userId, email: user.email, name: user.firstName });
-
+  const token = signToken({ sub: uid, email: emailClean, name: user.firstName });
   return res.status(200).json({
     token,
-    user: { id: userId, email: user.email, firstName: user.firstName, lastName: user.lastName, promoConsent: user.promoConsent, createdAt: user.createdAt?.toISOString() },
+    user: { id: uid, email: user.email, firstName: user.firstName, lastName: user.lastName, promoConsent: user.promoConsent, createdAt: user.createdAt?.toDate?.()?.toISOString() ?? null },
   });
 }
