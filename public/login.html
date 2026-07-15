@@ -6,23 +6,22 @@
   <title>Log in — VoiceCast</title>
   <link rel="stylesheet" href="/shared.css" />
   <style>
-    .auth-page { min-height:100dvh; display:flex; flex-direction:column; }
-    .auth-body { flex:1; display:flex; align-items:center; justify-content:center; padding:48px 24px; }
-    .auth-card { width:100%; max-width:400px; background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:36px 32px; }
-    .auth-logo { display:flex; align-items:center; gap:8px; text-decoration:none; margin-bottom:32px; }
-    .auth-logo-mark { width:28px; height:28px; background:var(--lime); border-radius:7px; display:flex; align-items:center; justify-content:center; }
-    .auth-logo-mark svg { width:14px; height:14px; }
-    .auth-logo-text { font-family:var(--mono); font-size:13px; font-weight:700; color:var(--white); }
-    .auth-logo-text span { color:var(--lime); }
-    .auth-title { font-family:var(--mono); font-size:22px; font-weight:700; color:var(--white); letter-spacing:-0.5px; margin-bottom:6px; }
-    .auth-subtitle { font-size:14px; color:var(--muted); margin-bottom:28px; line-height:1.5; }
-    .auth-form { display:flex; flex-direction:column; gap:18px; }
-    .auth-switch { text-align:center; margin-top:20px; font-size:13px; color:var(--muted); }
-    .auth-switch a { color:var(--lime); text-decoration:none; font-weight:600; }
-    .auth-switch a:hover { text-decoration:underline; }
-    .forgot-row { display:flex; justify-content:flex-end; }
-    .forgot-link { font-family:var(--mono); font-size:10px; color:var(--muted); text-decoration:none; transition:color .2s; }
-    .forgot-link:hover { color:var(--lime); }
+    .auth-page{min-height:100dvh;display:flex;flex-direction:column;}
+    .auth-body{flex:1;display:flex;align-items:center;justify-content:center;padding:48px 24px;}
+    .auth-card{width:100%;max-width:400px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:36px 32px;}
+    .auth-logo{display:flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:32px;}
+    .auth-logo-mark{width:28px;height:28px;background:var(--lime);border-radius:7px;display:flex;align-items:center;justify-content:center;}
+    .auth-logo-mark svg{width:14px;height:14px;}
+    .auth-logo-text{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--white);}
+    .auth-logo-text span{color:var(--lime);}
+    .auth-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--white);letter-spacing:-.5px;margin-bottom:6px;}
+    .auth-subtitle{font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.5;}
+    .auth-form{display:flex;flex-direction:column;gap:18px;}
+    .auth-switch{text-align:center;margin-top:20px;font-size:13px;color:var(--muted);}
+    .auth-switch a{color:var(--lime);text-decoration:none;font-weight:600;}
+    .forgot-row{display:flex;justify-content:flex-end;}
+    .forgot-link{font-family:var(--mono);font-size:10px;color:var(--muted);text-decoration:none;}
+    .forgot-link:hover{color:var(--lime);}
   </style>
 </head>
 <body>
@@ -38,67 +37,75 @@
     <p class="auth-subtitle">Log in to access your transcription history and settings.</p>
     <div id="alertBox" style="display:none;margin-bottom:16px;"></div>
     <form class="auth-form" id="loginForm" novalidate>
-      <div class="form-group"><label class="form-label" for="email">Email</label><input class="form-input" type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required /></div>
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <input class="form-input" type="email" id="email" placeholder="you@example.com" autocomplete="email" required />
+      </div>
       <div class="form-group">
         <label class="form-label" for="password">Password</label>
-        <div class="input-wrap"><input class="form-input" type="password" id="password" name="password" placeholder="········" autocomplete="current-password" required /><button type="button" class="input-eye" id="eyeBtn" aria-label="Show password"><svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+        <div class="input-wrap">
+          <input class="form-input" type="password" id="password" placeholder="········" autocomplete="current-password" required />
+          <button type="button" class="input-eye" id="eyeBtn" aria-label="Show password">
+            <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
         <div class="forgot-row"><a href="#" class="forgot-link">Forgot password?</a></div>
       </div>
       <button type="submit" class="btn btn-lime btn-full" id="submitBtn">Log in</button>
     </form>
     <p class="auth-switch">Don't have an account? <a href="/signup.html">Create one free</a></p>
   </div></div>
-  <footer class="site-footer"><div class="footer-links"><a href="/privacy.html" class="footer-link">Privacy Policy</a><a href="/terms.html" class="footer-link">Terms of Service</a></div><p class="footer-copy">&copy; 2026 <span>Sidhiratech</span>. All rights reserved.</p></footer>
+  <footer class="site-footer">
+    <div class="footer-links"><a href="/privacy.html" class="footer-link">Privacy Policy</a><a href="/terms.html" class="footer-link">Terms of Service</a></div>
+    <p class="footer-copy">&copy; 2026 <span>Sidhiratech</span>. All rights reserved.</p>
+  </footer>
 </div>
 <script>
-  const pwInput = document.getElementById('password');
-  const eyeBtn  = document.getElementById('eyeBtn');
-  const eyeIcon = document.getElementById('eyeIcon');
-  eyeBtn.addEventListener('click', () => {
-    const show = pwInput.type === 'password';
+  (function() {
+    try {
+      var tok = localStorage.getItem('vc_token');
+      if (!tok) return;
+      var p = JSON.parse(atob(tok.split('.')[1]));
+      if (p.exp * 1000 > Date.now()) window.location.replace('/app.html');
+    } catch(e) { localStorage.removeItem('vc_token'); }
+  })();
+
+  var pwInput = document.getElementById('password');
+  document.getElementById('eyeBtn').addEventListener('click', function() {
+    var show = pwInput.type === 'password';
     pwInput.type = show ? 'text' : 'password';
-    eyeIcon.innerHTML = show
+    document.getElementById('eyeIcon').innerHTML = show
       ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
       : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
   });
 
-  // Redirect if already logged in
-  (function() {
-    try {
-      const tok = localStorage.getItem('vc_token');
-      if (!tok) return;
-      const payload = JSON.parse(atob(tok.split('.')[1]));
-      if (payload.exp * 1000 > Date.now()) window.location.replace('/app.html');
-    } catch {}
-  })();
+  var form = document.getElementById('loginForm');
+  var submit = document.getElementById('submitBtn');
+  var alertBox = document.getElementById('alertBox');
 
-  const form     = document.getElementById('loginForm');
-  const submit   = document.getElementById('submitBtn');
-  const alertBox = document.getElementById('alertBox');
-
-  function showAlert(msg, type='error') {
-    alertBox.className = 'alert alert-' + type;
+  function showAlert(msg, type) {
+    alertBox.className = 'alert alert-' + (type || 'error');
     alertBox.textContent = msg;
     alertBox.style.display = 'block';
   }
 
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', async function(e) {
     e.preventDefault();
     alertBox.style.display = 'none';
-    const email = document.getElementById('email').value.trim();
-    const pw    = document.getElementById('password').value;
+    var email = document.getElementById('email').value.trim();
+    var pw = document.getElementById('password').value;
     if (!email || !pw) { showAlert('Please fill in all fields.'); return; }
 
     submit.disabled = true;
     submit.innerHTML = '<div class="spinner"></div> Logging in…';
 
     try {
-      const res  = await fetch('/api/auth/login', {
+      var res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: pw }),
+        body: JSON.stringify({ email: email, password: pw })
       });
-      const data = await res.json();
+      var data = await res.json();
       if (!res.ok) {
         showAlert(data.error || 'Login failed. Please try again.');
         submit.disabled = false;
@@ -107,11 +114,12 @@
       }
       localStorage.setItem('vc_token', data.token);
       window.location.href = '/app.html';
-    } catch (err) {
-      showAlert('Network error. Please check your connection and try again.');
+    } catch(err) {
+      showAlert('Network error. Please check your connection.');
       submit.disabled = false;
       submit.innerHTML = 'Log in';
     }
   });
 </script>
-</body></html>
+</body>
+</html>
