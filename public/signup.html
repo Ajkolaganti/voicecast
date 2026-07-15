@@ -14,7 +14,7 @@
     .auth-logo-mark svg{width:14px;height:14px;}
     .auth-logo-text{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--white);}
     .auth-logo-text span{color:var(--lime);}
-    .auth-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--white);letter-spacing:-0.5px;margin-bottom:6px;}
+    .auth-title{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--white);letter-spacing:-.5px;margin-bottom:6px;}
     .auth-subtitle{font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.5;}
     .auth-form{display:flex;flex-direction:column;gap:16px;}
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -23,10 +23,10 @@
     .pw-strength{display:flex;gap:4px;margin-top:6px;}
     .pw-bar{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .3s;}
     .pw-bar.weak{background:var(--error)}.pw-bar.fair{background:#F0A500}.pw-bar.good{background:#7DC98A}.pw-bar.strong{background:var(--lime)}
-    .pw-strength-label{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px;min-height:14px;}
+    .pw-label{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px;min-height:14px;}
+    .required-star{color:var(--error);margin-left:2px;}
     .auth-switch{text-align:center;margin-top:20px;font-size:13px;color:var(--muted);}
     .auth-switch a{color:var(--lime);text-decoration:none;font-weight:600;}
-    .required-star{color:var(--error);margin-left:2px;}
     .success-state{text-align:center;padding:16px 0;display:none;flex-direction:column;align-items:center;gap:16px;}
     .success-icon{width:56px;height:56px;background:var(--lime-glow);border:1.5px solid var(--lime);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--lime);}
     .success-title{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--white);}
@@ -42,13 +42,13 @@
 <div class="page auth-page">
   <div class="auth-body"><div class="auth-card">
     <a href="/" class="auth-logo"><div class="auth-logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#0A0F08" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div><span class="auth-logo-text">Voice<span>Cast</span></span></a>
-    <h1 class="auth-title">Create your account</h1>
-    <p class="auth-subtitle">Free to start. No credit card required.</p>
+    <h1 class="auth-title" id="cardTitle">Create your account</h1>
+    <p class="auth-subtitle" id="cardSub">Free to start. No credit card required.</p>
     <div id="alertBox" style="display:none;margin-bottom:16px;"></div>
     <div class="success-state" id="successState">
       <div class="success-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
       <p class="success-title">You're in!</p>
-      <p class="success-sub" id="successMsg"></p>
+      <p class="success-sub" id="successMsg">Taking you to the app…</p>
       <a href="/app.html" class="btn btn-lime btn-full" style="margin-top:8px;">Open VoiceCast</a>
     </div>
     <form class="auth-form" id="signupForm" novalidate>
@@ -60,8 +60,8 @@
       <div class="form-group">
         <label class="form-label" for="password">Password<span class="required-star">*</span></label>
         <div class="input-wrap"><input class="form-input" type="password" id="password" placeholder="Min. 8 characters" autocomplete="new-password" required /><button type="button" class="input-eye" id="eyeBtn"><svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
-        <div class="pw-strength"><div class="pw-bar" id="bar1"></div><div class="pw-bar" id="bar2"></div><div class="pw-bar" id="bar3"></div><div class="pw-bar" id="bar4"></div></div>
-        <p class="pw-strength-label" id="pwLabel"></p>
+        <div class="pw-strength"><div class="pw-bar" id="b1"></div><div class="pw-bar" id="b2"></div><div class="pw-bar" id="b3"></div><div class="pw-bar" id="b4"></div></div>
+        <p class="pw-label" id="pwLabel"></p>
       </div>
       <div class="consent-box">
         <p class="consent-title">// permissions</p>
@@ -73,58 +73,59 @@
         <label class="check-row">
           <input type="checkbox" id="agreePromo" />
           <span class="check-box"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0A0F08" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-          <span class="check-text">I'd like to receive product updates and occasional offers from VoiceCast by email. <em style="color:var(--muted);font-size:12px;">(optional &mdash; unsubscribe anytime)</em></span>
+          <span class="check-text">Send me product updates and occasional offers by email. <em style="color:var(--muted);font-size:12px;">(optional — unsubscribe anytime)</em></span>
         </label>
       </div>
       <button type="submit" class="btn btn-lime btn-full" id="submitBtn">Create account</button>
-      <p style="font-size:12px;color:var(--muted);text-align:center;line-height:1.5;">By creating an account you confirm you are 16 or older and accept our <a href="/terms.html" style="color:var(--lime);">Terms</a> and <a href="/privacy.html" style="color:var(--lime);">Privacy Policy</a>.</p>
+      <p style="font-size:12px;color:var(--muted);text-align:center;line-height:1.5;">By signing up you confirm you are 16 or older and accept our <a href="/terms.html" style="color:var(--lime);">Terms</a> and <a href="/privacy.html" style="color:var(--lime);">Privacy Policy</a>.</p>
     </form>
     <p class="auth-switch">Already have an account? <a href="/login.html">Log in</a></p>
   </div></div>
-  <footer class="site-footer"><div class="footer-links"><a href="/privacy.html" class="footer-link">Privacy Policy</a><a href="/terms.html" class="footer-link">Terms of Service</a></div><p class="footer-copy">&copy; 2026 <span>Sidhiratech</span>. All rights reserved.</p></footer>
+  <footer class="site-footer">
+    <div class="footer-links"><a href="/privacy.html" class="footer-link">Privacy Policy</a><a href="/terms.html" class="footer-link">Terms of Service</a></div>
+    <p class="footer-copy">&copy; 2026 <span>Sidhiratech</span>. All rights reserved.</p>
+  </footer>
 </div>
 <script>
-  const pwInput = document.getElementById('password');
-  document.getElementById('eyeBtn').addEventListener('click', () => {
-    const show = pwInput.type === 'password';
-    pwInput.type = show ? 'text' : 'password';
-    document.getElementById('eyeIcon').innerHTML = show
+  var pwInput = document.getElementById('password');
+  document.getElementById('eyeBtn').addEventListener('click', function() {
+    var s = pwInput.type === 'password';
+    pwInput.type = s ? 'text' : 'password';
+    document.getElementById('eyeIcon').innerHTML = s
       ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
       : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
   });
-  const bars=[1,2,3,4].map(i=>document.getElementById('bar'+i)),label=document.getElementById('pwLabel');
-  const levels=[{text:'',bars:0},{text:'Weak',cls:'weak',bars:1},{text:'Fair',cls:'fair',bars:2},{text:'Good',cls:'good',bars:3},{text:'Strong',cls:'strong',bars:4}];
-  function scorePassword(p){let s=0;if(p.length>=8)s++;if(p.length>=12)s++;if(/[A-Z]/.test(p)&&/[a-z]/.test(p))s++;if(/[0-9]/.test(p))s++;if(/[^A-Za-z0-9]/.test(p))s++;return Math.min(4,Math.ceil(s*4/5));}
-  pwInput.addEventListener('input',()=>{const v=pwInput.value,lvl=v.length===0?0:Math.max(1,scorePassword(v)),info=levels[lvl];bars.forEach((b,i)=>{b.className='pw-bar'+(i<info.bars?' '+info.cls:'');});label.textContent=info.text;label.style.color=lvl===1?'var(--error)':lvl===2?'#F0A500':'var(--lime)';});
-  const form=document.getElementById('signupForm'),submit=document.getElementById('submitBtn'),alertBox=document.getElementById('alertBox');
-  function showAlert(msg,type='error'){alertBox.className='alert alert-'+type;alertBox.textContent=msg;alertBox.style.display='block';}
-  form.addEventListener('submit', async(e)=>{
-    e.preventDefault(); alertBox.style.display='none';
-    const firstName=document.getElementById('firstName').value.trim();
-    const email=document.getElementById('email').value.trim();
-    const pw=document.getElementById('password').value;
-    const terms=document.getElementById('agreeTerms').checked;
-    const promo=document.getElementById('agreePromo').checked;
+  var bars=[1,2,3,4].map(function(i){return document.getElementById('b'+i);});
+  var label=document.getElementById('pwLabel');
+  function scorePw(p){var s=0;if(p.length>=8)s++;if(p.length>=12)s++;if(/[A-Z]/.test(p)&&/[a-z]/.test(p))s++;if(/[0-9]/.test(p))s++;if(/[^A-Za-z0-9]/.test(p))s++;return Math.min(4,Math.ceil(s*4/5));}
+  var lvl=[{t:'',c:''},{t:'Weak',c:'weak'},{t:'Fair',c:'fair'},{t:'Good',c:'good'},{t:'Strong',c:'strong'}];
+  pwInput.addEventListener('input',function(){var v=pwInput.value,n=v.length===0?0:Math.max(1,scorePw(v)),info=lvl[n];bars.forEach(function(b,i){b.className='pw-bar'+(i<n?' '+info.c:'');});label.textContent=info.t;label.style.color=n===1?'var(--error)':n===2?'#F0A500':'var(--lime)';});
+  var form=document.getElementById('signupForm'),submit=document.getElementById('submitBtn'),alertBox=document.getElementById('alertBox');
+  function showAlert(msg,type){alertBox.className='alert alert-'+(type||'error');alertBox.textContent=msg;alertBox.style.display='block';}
+  form.addEventListener('submit',async function(e){
+    e.preventDefault();alertBox.style.display='none';
+    var firstName=document.getElementById('firstName').value.trim();
+    var lastName=document.getElementById('lastName').value.trim();
+    var email=document.getElementById('email').value.trim();
+    var pw=document.getElementById('password').value;
+    var terms=document.getElementById('agreeTerms').checked;
+    var promo=document.getElementById('agreePromo').checked;
     if(!firstName){showAlert('Please enter your first name.');return;}
     if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showAlert('Please enter a valid email address.');return;}
     if(pw.length<8){showAlert('Password must be at least 8 characters.');return;}
-    if(!terms){showAlert('You must agree to the Terms of Service and Privacy Policy to continue.');document.getElementById('termsRow').style.outline='1.5px solid var(--error)';return;}
+    if(!terms){showAlert('You must agree to the Terms of Service and Privacy Policy to continue.');document.getElementById('termsRow').style.outline='1.5px solid var(--error)';document.getElementById('termsRow').style.borderRadius='6px';return;}
     submit.disabled=true;submit.innerHTML='<div class="spinner"></div> Creating account…';
     try{
-      const res=await fetch('/api/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({firstName,email,password:pw,promoConsent:promo})});
-      const data=await res.json();
+      var res=await fetch('/api/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({firstName:firstName,lastName:lastName,email:email,password:pw,promoConsent:promo})});
+      var data=await res.json();
       if(!res.ok){showAlert(data.error||'Signup failed. Please try again.');submit.disabled=false;submit.innerHTML='Create account';return;}
       localStorage.setItem('vc_token',data.token);
-      form.style.display='none';
-      document.querySelector('.auth-subtitle').style.display='none';
-      document.querySelector('.auth-title').textContent='Account created!';
-      const ss=document.getElementById('successState');ss.style.display='flex';
+      form.style.display='none';document.getElementById('cardSub').style.display='none';document.getElementById('cardTitle').textContent='Account created!';
+      var ss=document.getElementById('successState');ss.style.display='flex';
       document.getElementById('successMsg').textContent=promo?'We\'ll send product updates to '+email+'.':'Taking you to the app…';
-      setTimeout(()=>{window.location.href='/app.html';},2000);
-    }catch(err){
-      showAlert('Network error. Please check your connection and try again.');
-      submit.disabled=false;submit.innerHTML='Create account';
-    }
+      setTimeout(function(){window.location.href='/app.html';},2000);
+    }catch(err){showAlert('Network error. Please check your connection.');submit.disabled=false;submit.innerHTML='Create account';}
   });
 </script>
-</body></html>
+</body>
+</html>
