@@ -1,0 +1,1 @@
+{"version":2,"rewrites":[{"source":"/api/transcribe","destination":"/api/transcribe"},{"source":"/api/health","destination":"/api/health"},{"source":"/(.*)","destination":"/public/$1"}]}
