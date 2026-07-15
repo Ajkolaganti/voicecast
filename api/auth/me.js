@@ -1,11 +1,10 @@
 /**
  * GET /api/auth/me
  * Authorization: Bearer <token>
- * Returns user profile (never returns passwordHash)
+ * Returns user profile from Firestore (never returns passwordHash).
  */
 
-import { ObjectId }             from 'mongodb';
-import { getDb }                from '../../lib/mongodb.js';
+import { getDb, COLLECTIONS }   from '../../lib/firebase.js';
 import { requireAuth, setCors } from '../../lib/auth.js';
 
 export const config = { api: { bodyParser: false } };
@@ -19,26 +18,19 @@ export default async function handler(req, res) {
   if (!payload) return;
 
   let db;
-  try {
-    db = await getDb();
-  } catch {
-    return res.status(503).json({ error: 'Database unavailable.' });
-  }
+  try { db = getDb(); } catch { return res.status(503).json({ error: 'Firebase is not configured.' }); }
 
-  const user = await db.collection('users').findOne(
-    { _id: new ObjectId(payload.sub) },
-    { projection: { passwordHash: 0 } }
-  );
+  const snap = await db.collection(COLLECTIONS.USERS).doc(payload.sub).get();
+  if (!snap.exists) return res.status(404).json({ error: 'User not found.' });
 
-  if (!user) return res.status(404).json({ error: 'User not found.' });
-
+  const u = snap.data();
   return res.status(200).json({
-    id:          user._id.toString(),
-    email:       user.email,
-    firstName:   user.firstName,
-    lastName:    user.lastName,
-    promoConsent: user.promoConsent,
-    createdAt:   user.createdAt?.toISOString(),
-    lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+    id:          snap.id,
+    email:       u.email,
+    firstName:   u.firstName,
+    lastName:    u.lastName,
+    promoConsent: u.promoConsent,
+    createdAt:   u.createdAt?.toDate?.()?.toISOString()  ?? null,
+    lastLoginAt: u.lastLoginAt?.toDate?.()?.toISOString() ?? null,
   });
 }
