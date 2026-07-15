@@ -1,0 +1,12 @@
+{
+  "name": "voicecast",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VoiceCast — audio transcription SaaS by Sidhiratech",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "mongodb": "^6.8.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3"
+  }
+}
