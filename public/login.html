@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log in — VoiceCast</title>
+  <link rel="stylesheet" href="/shared.css" />
+  <style>
+    .auth-page { min-height:100dvh; display:flex; flex-direction:column; }
+    .auth-body { flex:1; display:flex; align-items:center; justify-content:center; padding:48px 24px; }
+    .auth-card { width:100%; max-width:400px; background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:36px 32px; }
+    .auth-logo { display:flex; align-items:center; gap:8px; text-decoration:none; margin-bottom:32px; }
+    .auth-logo-mark { width:28px; height:28px; background:var(--lime); border-radius:7px; display:flex; align-items:center; justify-content:center; }
+    .auth-logo-mark svg { width:14px; height:14px; }
+    .auth-logo-text { font-family:var(--mono); font-size:13px; font-weight:700; color:var(--white); }
+    .auth-logo-text span { color:var(--lime); }
+    .auth-title { font-family:var(--mono); font-size:22px; font-weight:700; color:var(--white); letter-spacing:-0.5px; margin-bottom:6px; }
+    .auth-subtitle { font-size:14px; color:var(--muted); margin-bottom:28px; line-height:1.5; }
+    .auth-form { display:flex; flex-direction:column; gap:18px; }
+    .auth-switch { text-align:center; margin-top:20px; font-size:13px; color:var(--muted); }
+    .auth-switch a { color:var(--lime); text-decoration:none; font-weight:600; }
+    .auth-switch a:hover { text-decoration:underline; }
+    .forgot-row { display:flex; justify-content:flex-end; }
+    .forgot-link { font-family:var(--mono); font-size:10px; color:var(--muted); text-decoration:none; transition:color .2s; }
+    .forgot-link:hover { color:var(--lime); }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/" class="nav-logo"><div class="nav-logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#0A0F08" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div><span class="nav-logo-text">Voice<span>Cast</span></span></a>
+  <div class="nav-links"><a href="/signup.html" class="nav-link">Sign up</a></div>
+  <a href="/app.html" class="nav-cta outline">Try the app</a>
+</nav>
+<div class="page auth-page">
+  <div class="auth-body"><div class="auth-card">
+    <a href="/" class="auth-logo"><div class="auth-logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#0A0F08" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div><span class="auth-logo-text">Voice<span>Cast</span></span></a>
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-subtitle">Log in to access your transcription history and settings.</p>
+    <div id="alertBox" style="display:none;margin-bottom:16px;"></div>
+    <form class="auth-form" id="loginForm" novalidate>
+      <div class="form-group"><label class="form-label" for="email">Email</label><input class="form-input" type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required /></div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="input-wrap"><input class="form-input" type="password" id="password" name="password" placeholder="········" autocomplete="current-password" required /><button type="button" class="input-eye" id="eyeBtn" aria-label="Show password"><svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+        <div class="forgot-row"><a href="#" class="forgot-link">Forgot password?</a></div>
+      </div>
+      <button type="submit" class="btn btn-lime btn-full" id="submitBtn">Log in</button>
+    </form>
+    <p class="auth-switch">Don't have an account? <a href="/signup.html">Create one free</a></p>
+  </div></div>
+  <footer class="site-footer"><div class="footer-links"><a href="/privacy.html" class="footer-link">Privacy Policy</a><a href="/terms.html" class="footer-link">Terms of Service</a></div><p class="footer-copy">&copy; 2026 <span>Sidhiratech</span>. All rights reserved.</p></footer>
+</div>
+<script>
+  const pwInput=document.getElementById('password'),eyeBtn=document.getElementById('eyeBtn'),eyeIcon=document.getElementById('eyeIcon');
+  eyeBtn.addEventListener('click',()=>{const s=pwInput.type==='password';pwInput.type=s?'text':'password';eyeIcon.innerHTML=s?'<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>':'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';});
+  const form=document.getElementById('loginForm'),submit=document.getElementById('submitBtn'),alert=document.getElementById('alertBox');
+  function showAlert(m,t='error'){alert.className='alert alert-'+t;alert.textContent=m;alert.style.display='block';}
+  form.addEventListener('submit',async(e)=>{e.preventDefault();alert.style.display='none';
+    const email=document.getElementById('email').value.trim(),pw=document.getElementById('password').value;
+    if(!email||!pw){showAlert('Please fill in all fields.');return;}
+    submit.disabled=true;submit.innerHTML='<div class="spinner"></div> Logging in…';
+    await new Promise(r=>setTimeout(r,1200));
+    window.location.href='/app.html';
+  });
+</script>
+</body></html>

@@ -2,296 +2,115 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>VoiceCast · Transcribe</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VoiceCast — Audio to Text in Seconds</title>
+  <meta name="description" content="Upload any audio file and get a clean transcript instantly. Powered by Whisper AI." />
+  <link rel="stylesheet" href="/shared.css" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --bg:#0A0F08;--surface:#111609;--card:#161D13;--border:#253020;--lime:#CAFF3C;--lime-glow:rgba(202,255,60,0.15);--lime-glow2:rgba(202,255,60,0.06);--muted:#6B7D65;--body:#BEC9B8;--white:#F0F4EE;--error:#FF5B5B;--radius:16px;--radius-sm:10px; }
-    html { background:var(--bg); height:100%; }
-    body { font-family:'Inter',system-ui,sans-serif; background:var(--bg); color:var(--body); min-height:100dvh; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
-    body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(202,255,60,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(202,255,60,0.025) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
-    .app { position:relative; z-index:1; max-width:480px; margin:0 auto; padding:0 16px 48px; }
-    .header { display:flex; align-items:center; justify-content:space-between; padding:20px 0 8px; }
-    .logo { display:flex; align-items:center; gap:8px; }
-    .logo-mark { width:32px; height:32px; background:var(--lime); border-radius:8px; display:flex; align-items:center; justify-content:center; }
-    .logo-text { font-family:'Space Mono',monospace; font-size:14px; font-weight:700; color:var(--white); letter-spacing:-0.3px; }
-    .logo-text span { color:var(--lime); }
-    .health-pill { display:flex; align-items:center; gap:6px; font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); background:var(--card); border:1px solid var(--border); border-radius:100px; padding:4px 10px; cursor:pointer; transition:border-color 0.2s; }
-    .health-pill:hover { border-color:var(--lime); }
-    .health-dot { width:6px; height:6px; border-radius:50%; background:var(--muted); transition:background 0.3s; }
-    .health-dot.online { background:var(--lime); box-shadow:0 0 6px var(--lime); animation:pulse-dot 2s infinite; }
-    .health-dot.offline { background:var(--error); }
-    @keyframes pulse-dot { 0%,100%{opacity:1}50%{opacity:.4} }
-    .hero { padding:32px 0 24px; }
-    .hero-eyebrow { font-family:'Space Mono',monospace; font-size:10px; font-weight:700; color:var(--lime); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; }
-    .hero-title { font-family:'Space Mono',monospace; font-size:clamp(26px,7vw,34px); font-weight:700; color:var(--white); line-height:1.15; letter-spacing:-1px; }
-    .hero-title em { font-style:normal; color:var(--lime); }
-    .hero-sub { margin-top:10px; font-size:14px; color:var(--muted); line-height:1.6; font-weight:300; }
-    .upload-card { background:var(--card); border:1.5px dashed var(--border); border-radius:var(--radius); padding:32px 20px; text-align:center; transition:border-color .25s,background .25s; cursor:pointer; position:relative; overflow:hidden; }
-    .upload-card::before { content:''; position:absolute; inset:0; background:var(--lime-glow2); opacity:0; transition:opacity .25s; pointer-events:none; }
-    .upload-card.drag-over,.upload-card.has-file { border-color:var(--lime); }
-    .upload-card.drag-over::before,.upload-card.has-file::before { opacity:1; }
-    .upload-card.drag-over { background:var(--surface); }
-    .upload-card.has-file { border-style:solid; }
-    .waveform { display:flex; align-items:flex-end; justify-content:center; gap:3px; height:48px; margin-bottom:16px; }
-    .wave-bar { width:3px; border-radius:2px; background:var(--border); transition:background .3s; animation:wave-idle 1.8s ease-in-out infinite; }
-    .upload-card.has-file .wave-bar,.upload-card.drag-over .wave-bar { background:var(--lime); }
-    .wave-bar:nth-child(1){height:18px;animation-delay:0s}.wave-bar:nth-child(2){height:32px;animation-delay:.1s}.wave-bar:nth-child(3){height:24px;animation-delay:.2s}.wave-bar:nth-child(4){height:40px;animation-delay:.3s}.wave-bar:nth-child(5){height:28px;animation-delay:.15s}.wave-bar:nth-child(6){height:44px;animation-delay:.05s}.wave-bar:nth-child(7){height:34px;animation-delay:.25s}.wave-bar:nth-child(8){height:20px;animation-delay:.35s}.wave-bar:nth-child(9){height:38px;animation-delay:.1s}.wave-bar:nth-child(10){height:26px;animation-delay:.4s}.wave-bar:nth-child(11){height:30px;animation-delay:.2s}.wave-bar:nth-child(12){height:22px;animation-delay:.45s}.wave-bar:nth-child(13){height:36px;animation-delay:.3s}.wave-bar:nth-child(14){height:28px;animation-delay:.15s}.wave-bar:nth-child(15){height:42px;animation-delay:.05s}.wave-bar:nth-child(16){height:32px;animation-delay:.25s}.wave-bar:nth-child(17){height:18px;animation-delay:.35s}
-    @keyframes wave-idle{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.3)}}
-    @keyframes wave-active{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
-    .animating .wave-bar { animation-name:wave-active; animation-duration:.6s; }
-    .upload-icon { width:44px; height:44px; background:var(--surface); border:1.5px solid var(--border); border-radius:12px; display:flex; align-items:center; justify-content:center; margin:0 auto 14px; transition:border-color .2s,background .2s; }
-    .upload-card.has-file .upload-icon { background:var(--lime-glow); border-color:var(--lime); }
-    .upload-icon svg { color:var(--muted); transition:color .2s; }
-    .upload-card.has-file .upload-icon svg { color:var(--lime); }
-    .upload-label { font-size:14px; font-weight:500; color:var(--white); margin-bottom:4px; }
-    .upload-hint { font-size:12px; color:var(--muted); font-family:'Space Mono',monospace; }
-    .file-name { margin-top:12px; font-family:'Space Mono',monospace; font-size:11px; color:var(--lime); background:var(--lime-glow); border-radius:6px; padding:6px 10px; display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    input[type=file] { display:none; }
-    .options-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
-    .select-wrap { display:flex; flex-direction:column; gap:6px; }
-    .select-label { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
-    select { appearance:none; -webkit-appearance:none; background:var(--card); border:1.5px solid var(--border); border-radius:var(--radius-sm); color:var(--white); font-family:'Space Mono',monospace; font-size:12px; padding:10px 32px 10px 12px; cursor:pointer; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7D65' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; transition:border-color .2s; width:100%; }
-    select:focus { outline:none; border-color:var(--lime); }
-    select option { background:#161D13; }
-    .btn-transcribe { margin-top:16px; width:100%; height:52px; background:var(--lime); color:#0A0F08; border:none; border-radius:var(--radius-sm); font-family:'Space Mono',monospace; font-size:13px; font-weight:700; letter-spacing:.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:opacity .2s,transform .15s; }
-    .btn-transcribe:hover:not(:disabled) { opacity:.9; transform:translateY(-1px); }
-    .btn-transcribe:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; }
-    .btn-transcribe.loading { background:var(--surface); border:1.5px solid var(--lime); color:var(--lime); cursor:not-allowed; }
-    .status-area { margin-top:16px; display:none; }
-    .status-area.visible { display:block; }
-    .status-bar-wrap { background:var(--card); border:1px solid var(--border); border-radius:100px; height:4px; overflow:hidden; margin-bottom:8px; }
-    .status-bar-fill { height:100%; background:var(--lime); border-radius:100px; width:0%; transition:width .4s ease; box-shadow:0 0 8px var(--lime); }
-    .status-text { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); display:flex; align-items:center; gap:6px; }
-    .status-text.error { color:var(--error); }
-    .status-text.success { color:var(--lime); }
-    .result-card { margin-top:20px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; display:none; }
-    .result-card.visible { display:block; }
-    .result-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border); }
-    .result-title { font-family:'Space Mono',monospace; font-size:11px; font-weight:700; color:var(--lime); letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:8px; }
-    .result-actions { display:flex; gap:8px; }
-    .icon-btn { width:32px; height:32px; background:var(--surface); border:1px solid var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); transition:border-color .2s,color .2s; }
-    .icon-btn:hover { border-color:var(--lime); color:var(--lime); }
-    .icon-btn svg { width:14px; height:14px; }
-    .result-body { padding:16px; max-height:320px; overflow-y:auto; }
-    .result-body::-webkit-scrollbar { width:4px; }
-    .result-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
-    .result-text { font-size:15px; color:var(--white); line-height:1.75; font-weight:300; white-space:pre-wrap; }
-    .result-meta { padding:12px 16px; border-top:1px solid var(--border); display:flex; gap:16px; flex-wrap:wrap; }
-    .meta-item { display:flex; flex-direction:column; gap:2px; }
-    .meta-key { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
-    .meta-val { font-family:'Space Mono',monospace; font-size:11px; color:var(--lime); }
-    .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--white); color:var(--bg); font-family:'Space Mono',monospace; font-size:12px; font-weight:700; padding:10px 20px; border-radius:100px; z-index:999; transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s; opacity:0; white-space:nowrap; pointer-events:none; }
-    .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
-    .footer { margin-top:40px; padding:0 0 16px; display:flex; align-items:center; justify-content:space-between; }
-    .footer-brand { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); }
-    .footer-brand span { color:var(--lime); }
-    .footer-link { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); text-decoration:none; transition:color .2s; }
-    .footer-link:hover { color:var(--lime); }
-    .spinner { width:16px; height:16px; border:2px solid rgba(202,255,60,.3); border-top-color:var(--lime); border-radius:50%; animation:spin .7s linear infinite; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    @media (prefers-reduced-motion:reduce) { .wave-bar,.spinner { animation:none; } }
-    @media (min-width:520px) { .app { padding:0 24px 64px; } .upload-card { padding:40px 32px; } }
+    .hero { padding: 80px 0 72px; text-align: center; position: relative; }
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--lime); letter-spacing: 2.5px; text-transform: uppercase; background: var(--lime-glow); border: 1px solid rgba(202,255,60,0.25); padding: 5px 12px; border-radius: 100px; margin-bottom: 28px; }
+    .hero-eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--lime); animation: pulse-dot 2s infinite; }
+    @keyframes pulse-dot { 0%,100%{opacity:1}50%{opacity:.3} }
+    .hero-title { font-family: var(--mono); font-weight: 700; font-size: clamp(36px,8vw,68px); color: var(--white); line-height: 1.08; letter-spacing: -2px; margin-bottom: 22px; }
+    .hero-title em { font-style: normal; color: var(--lime); }
+    .hero-sub { font-size: clamp(15px,2.5vw,18px); color: var(--muted2); line-height: 1.7; max-width: 540px; margin: 0 auto 40px; font-weight: 300; }
+    .hero-ctas { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .hero-wave { display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 64px; margin: 56px auto 0; max-width: 400px; opacity: 0.55; }
+    .hw-bar { width: 4px; border-radius: 3px; background: var(--lime); animation: hw-idle 2s ease-in-out infinite; }
+    .hw-bar:nth-child(1){height:20px;animation-delay:0s}.hw-bar:nth-child(2){height:38px;animation-delay:.08s}.hw-bar:nth-child(3){height:26px;animation-delay:.16s}.hw-bar:nth-child(4){height:52px;animation-delay:.04s}.hw-bar:nth-child(5){height:32px;animation-delay:.2s}.hw-bar:nth-child(6){height:60px;animation-delay:.12s}.hw-bar:nth-child(7){height:44px;animation-delay:.28s}.hw-bar:nth-child(8){height:56px;animation-delay:.06s}.hw-bar:nth-child(9){height:36px;animation-delay:.22s}.hw-bar:nth-child(10){height:64px;animation-delay:.14s}.hw-bar:nth-child(11){height:48px;animation-delay:.3s}.hw-bar:nth-child(12){height:58px;animation-delay:.1s}.hw-bar:nth-child(13){height:40px;animation-delay:.24s}.hw-bar:nth-child(14){height:50px;animation-delay:.18s}.hw-bar:nth-child(15){height:28px;animation-delay:.26s}.hw-bar:nth-child(16){height:42px;animation-delay:.02s}.hw-bar:nth-child(17){height:22px;animation-delay:.32s}.hw-bar:nth-child(18){height:34px;animation-delay:.07s}.hw-bar:nth-child(19){height:18px;animation-delay:.19s}
+    @keyframes hw-idle { 0%,100%{transform:scaleY(1)} 50%{transform:scaleY(0.25)} }
+    .stats-band { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 24px 0; }
+    .stats-inner { display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; }
+    .stat { display: flex; flex-direction: column; align-items: center; padding: 12px 40px; position: relative; }
+    .stat + .stat::before { content: ''; position: absolute; left: 0; top: 20%; bottom: 20%; width: 1px; background: var(--border); }
+    .stat-val { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--lime); line-height: 1; }
+    .stat-label { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+    .features { padding: 80px 0; }
+    .section-eyebrow { font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--lime); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px; }
+    .section-title { font-family: var(--mono); font-size: clamp(22px,4vw,34px); font-weight: 700; color: var(--white); line-height: 1.2; letter-spacing: -0.5px; margin-bottom: 48px; }
+    .feat-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 16px; }
+    .feat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 28px 24px; transition: border-color .25s,transform .2s; }
+    .feat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .feat-icon { width: 40px; height: 40px; background: var(--lime-glow); border: 1px solid rgba(202,255,60,.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; color: var(--lime); }
+    .feat-icon svg { width: 18px; height: 18px; }
+    .feat-name { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--white); margin-bottom: 8px; }
+    .feat-desc { font-size: 14px; color: var(--muted2); line-height: 1.65; }
+    .how { padding: 0 0 80px; }
+    .steps { display: flex; flex-direction: column; gap: 0; max-width: 620px; margin: 0 auto; }
+    .step { display: flex; gap: 20px; align-items: flex-start; padding: 28px 0; border-bottom: 1px solid var(--border); }
+    .step:last-child { border-bottom: none; }
+    .step-num { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--lime); background: var(--lime-glow); border: 1px solid rgba(202,255,60,.2); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-title { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--white); margin-bottom: 6px; }
+    .step-desc { font-size: 14px; color: var(--muted2); line-height: 1.65; }
+    .formats { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 32px 0; }
+    .fmt-pill { font-family: var(--mono); font-size: 11px; color: var(--muted2); background: var(--card); border: 1px solid var(--border); border-radius: 100px; padding: 5px 14px; }
+    .cta-band { background: var(--card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 72px 24px; text-align: center; }
+    .cta-band h2 { font-family: var(--mono); font-size: clamp(22px,4vw,36px); font-weight: 700; color: var(--white); line-height: 1.2; letter-spacing: -0.5px; margin-bottom: 14px; }
+    .cta-band p { font-size: 15px; color: var(--muted2); margin-bottom: 32px; }
+    .lang-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 36px; }
+    .lang-badge { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--muted2); background: var(--lime-glow2); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; }
+    .muted2 { color: var(--muted2); }
   </style>
 </head>
 <body>
-<div class="app">
-  <header class="header">
-    <div class="logo">
-      <div class="logo-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#0A0F08" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
-          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-          <line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
-        </svg>
-      </div>
-      <span class="logo-text">Voice<span>Cast</span></span>
+<nav class="nav">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0A0F08" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
     </div>
-    <button class="health-pill" id="healthBtn">
-      <span class="health-dot" id="healthDot"></span>
-      <span id="healthLabel">checking</span>
-    </button>
-  </header>
-  <section class="hero">
-    <p class="hero-eyebrow">// audio to text</p>
-    <h1 class="hero-title">Drop audio.<br><em>Get words.</em></h1>
-    <p class="hero-sub">Upload any voice recording and get a clean transcript in seconds &mdash; powered by Whisper AI.</p>
-  </section>
-  <div class="upload-card" id="dropZone" role="button" tabindex="0">
-    <div class="waveform" id="waveform">
-      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-    </div>
-    <div class="upload-icon">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
-        <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-      </svg>
-    </div>
-    <p class="upload-label" id="uploadLabel">Tap to upload audio</p>
-    <p class="upload-hint" id="uploadHint">.m4a &middot; .wav &middot; .mp3 &middot; .ogg</p>
-    <span class="file-name" id="fileName" style="display:none"></span>
-    <input type="file" id="fileInput" accept=".m4a,.wav,.mp3,.ogg,.flac,.aac,.webm" />
+    <span class="nav-logo-text">Voice<span>Cast</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="/#features" class="nav-link">Features</a>
+    <a href="/#how" class="nav-link">How it works</a>
+    <a href="/login.html" class="nav-link">Log in</a>
   </div>
-  <div class="options-row">
-    <div class="select-wrap">
-      <span class="select-label">Language</span>
-      <select id="langSelect">
-        <option value="">Auto-detect</option>
-        <option value="en">English</option><option value="es">Spanish</option><option value="fr">French</option>
-        <option value="de">German</option><option value="hi">Hindi</option><option value="pt">Portuguese</option>
-        <option value="it">Italian</option><option value="ja">Japanese</option><option value="zh">Chinese</option>
-        <option value="ar">Arabic</option><option value="ko">Korean</option><option value="ru">Russian</option>
-      </select>
+  <a href="/signup.html" class="nav-cta">Get started</a>
+</nav>
+<div class="page">
+  <section class="hero"><div class="container">
+    <div class="hero-eyebrow">Powered by Whisper AI</div>
+    <h1 class="hero-title">Audio in.<br><em>Words out.</em></h1>
+    <p class="hero-sub">Drop any voice recording and get a clean, accurate transcript in seconds. No setup. No API keys. No guesswork.</p>
+    <div class="hero-ctas">
+      <a href="/signup.html" class="btn btn-lime btn-lg">Start for free</a>
+      <a href="/app.html" class="btn btn-outline btn-lg">Try without signing up</a>
     </div>
-    <div class="select-wrap">
-      <span class="select-label">Model</span>
-      <select id="modelSelect">
-        <option value="">Default</option>
-        <option value="tiny">Tiny &middot; fastest</option><option value="base">Base</option>
-        <option value="small">Small</option><option value="medium">Medium</option>
-        <option value="large">Large &middot; best</option>
-      </select>
+    <div class="hero-wave"><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div><div class="hw-bar"></div></div>
+  </div></section>
+  <div class="stats-band"><div class="stats-inner">
+    <div class="stat"><span class="stat-val">&lt;&nbsp;5s</span><span class="stat-label">Avg. transcription</span></div>
+    <div class="stat"><span class="stat-val">99+</span><span class="stat-label">Languages</span></div>
+    <div class="stat"><span class="stat-val">6</span><span class="stat-label">Audio formats</span></div>
+    <div class="stat"><span class="stat-val">5</span><span class="stat-label">Model tiers</span></div>
+  </div></div>
+  <section class="features" id="features"><div class="container">
+    <p class="section-eyebrow">// what you get</p>
+    <h2 class="section-title">Everything you need.<br>Nothing you don't.</h2>
+    <div class="feat-grid">
+      <div class="feat-card"><div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><p class="feat-name">Whisper-powered accuracy</p><p class="feat-desc">OpenAI Whisper runs under the hood. Choose from Tiny to Large depending on speed vs. accuracy needs.</p></div>
+      <div class="feat-card"><div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><p class="feat-name">Auto language detection</p><p class="feat-desc">Whisper identifies the spoken language automatically, or you can pin a specific one. 99+ languages supported.</p></div>
+      <div class="feat-card"><div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><p class="feat-name">Copy, download, share</p><p class="feat-desc">One-tap copy to clipboard, or save as a clean .txt file named after your original recording.</p></div>
+      <div class="feat-card"><div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><p class="feat-name">Secure proxy, no leaks</p><p class="feat-desc">Your audio travels through a Vercel edge proxy. No third-party analytics. No ad trackers.</p></div>
+      <div class="feat-card"><div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><p class="feat-name">Mobile-first design</p><p class="feat-desc">Built for phones from the ground up. Tap to upload, choose settings, and read the result.</p></div>
+      <div class="feat-card"><div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><p class="feat-name">Live server health</p><p class="feat-desc">The status pill pings the backend every 30 seconds so you always know before you upload.</p></div>
     </div>
-  </div>
-  <button class="btn-transcribe" id="transcribeBtn" disabled>
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-    Transcribe
-  </button>
-  <div class="status-area" id="statusArea">
-    <div class="status-bar-wrap"><div class="status-bar-fill" id="progressBar"></div></div>
-    <p class="status-text" id="statusText"><span class="spinner" id="spinner"></span><span id="statusMsg">Uploading...</span></p>
-  </div>
-  <div class="result-card" id="resultCard">
-    <div class="result-header">
-      <span class="result-title"><svg width="12" height="12" viewBox="0 0 24 24" fill="#CAFF3C"><circle cx="12" cy="12" r="10"/></svg>Transcript</span>
-      <div class="result-actions">
-        <button class="icon-btn" id="copyBtn" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-        <button class="icon-btn" id="downloadBtn" title="Download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
-        <button class="icon-btn" id="clearBtn" title="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-      </div>
+  </div></section>
+  <section class="how" id="how"><div class="container">
+    <p class="section-eyebrow">// how it works</p>
+    <h2 class="section-title">Three steps. Done.</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num">01</div><div><p class="step-title">Upload your audio</p><p class="step-desc">Tap the upload zone and pick your file, or drag and drop it. Supports .m4a, .wav, .mp3, .ogg, .flac, and .aac.</p></div></div>
+      <div class="step"><div class="step-num">02</div><div><p class="step-title">Choose your settings</p><p class="step-desc">Pin a language or let Whisper auto-detect. Select a model tier: Tiny for speed, Large for accuracy.</p></div></div>
+      <div class="step"><div class="step-num">03</div><div><p class="step-title">Get your transcript</p><p class="step-desc">Results in under 5 seconds for short clips. Copy or download as .txt. Word count and language metadata included.</p></div></div>
     </div>
-    <div class="result-body"><p class="result-text" id="resultText"></p></div>
-    <div class="result-meta" id="resultMeta"></div>
+  </div></section>
+  <div class="container" style="padding-bottom:80px;text-align:center;">
+    <p class="section-eyebrow" style="margin-bottom:16px;">// supported formats</p>
+    <div class="formats"><span class="fmt-pill">.m4a</span><span class="fmt-pill">.mp3</span><span class="fmt-pill">.wav</span><span class="fmt-pill">.ogg</span><span class="fmt-pill">.flac</span><span class="fmt-pill">.aac</span><span class="fmt-pill">.webm</span></div>
+    <div class="lang-grid"><p style="width:100%;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">// languages include</p><span class="lang-badge">English</span><span class="lang-badge">Hindi</span><span class="lang-badge">Spanish</span><span class="lang-badge">French</span><span class="lang-badge">German</span><span class="lang-badge">Arabic</span><span class="lang-badge">Japanese</span><span class="lang-badge">Chinese</span><span class="lang-badge">Portuguese</span><span class="lang-badge">Korean</span><span class="lang-badge">Russian</span><span class="lang-badge">+ 88 more</span></div>
   </div>
-  <footer class="footer">
-    <p class="footer-brand">by <span>Sidhiratech</span></p>
-    <a class="footer-link" href="/api/health" target="_blank">API status ↗</a>
-  </footer>
+  <div class="cta-band"><h2>Ready to transcribe?</h2><p>Create a free account or jump straight into the app.</p><div class="hero-ctas"><a href="/signup.html" class="btn btn-lime btn-lg">Create free account</a><a href="/app.html" class="btn btn-outline btn-lg">Open the app</a></div></div>
+  <footer class="site-footer"><div class="footer-links"><a href="/" class="footer-link">Home</a><a href="/app.html" class="footer-link">App</a><a href="/login.html" class="footer-link">Log in</a><a href="/signup.html" class="footer-link">Sign up</a><a href="/privacy.html" class="footer-link">Privacy</a><a href="/terms.html" class="footer-link">Terms</a></div><p class="footer-copy">&copy; 2026 <span>Sidhiratech</span>. All rights reserved.</p></footer>
 </div>
-<div class="toast" id="toast"></div>
-<script>
-  const dropZone=document.getElementById('dropZone'),fileInput=document.getElementById('fileInput'),
-  fileName=document.getElementById('fileName'),uploadLabel=document.getElementById('uploadLabel'),
-  uploadHint=document.getElementById('uploadHint'),transcribeBtn=document.getElementById('transcribeBtn'),
-  statusArea=document.getElementById('statusArea'),statusText=document.getElementById('statusText'),
-  statusMsg=document.getElementById('statusMsg'),spinner=document.getElementById('spinner'),
-  progressBar=document.getElementById('progressBar'),resultCard=document.getElementById('resultCard'),
-  resultText=document.getElementById('resultText'),resultMeta=document.getElementById('resultMeta'),
-  copyBtn=document.getElementById('copyBtn'),downloadBtn=document.getElementById('downloadBtn'),
-  clearBtn=document.getElementById('clearBtn'),waveform=document.getElementById('waveform'),
-  healthDot=document.getElementById('healthDot'),healthLabel=document.getElementById('healthLabel'),
-  toast=document.getElementById('toast'),langSelect=document.getElementById('langSelect'),
-  modelSelect=document.getElementById('modelSelect');
-  let selectedFile=null,transcriptData=null,startTime=0;
-
-  async function checkHealth(){
-    try{
-      const r=await fetch('/api/health',{signal:AbortSignal.timeout(5000)});
-      healthDot.className='health-dot '+(r.ok?'online':'offline');
-      healthLabel.textContent=r.ok?'online':'degraded';
-    }catch{healthDot.className='health-dot offline';healthLabel.textContent='offline';}
-  }
-  checkHealth();setInterval(checkHealth,30000);
-  document.getElementById('healthBtn').addEventListener('click',()=>{healthLabel.textContent='...';healthDot.className='health-dot';checkHealth();});
-
-  function handleFile(f){
-    if(!f)return;
-    selectedFile=f;
-    dropZone.classList.add('has-file');
-    fileName.textContent=f.name;fileName.style.display='inline-block';
-    uploadLabel.textContent='Ready to transcribe';
-    uploadHint.textContent=fmt(f.size);
-    transcribeBtn.disabled=false;
-    resultCard.classList.remove('visible');statusArea.classList.remove('visible');
-  }
-  dropZone.addEventListener('click',()=>fileInput.click());
-  dropZone.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')fileInput.click();});
-  fileInput.addEventListener('change',()=>handleFile(fileInput.files[0]));
-  dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag-over');});
-  dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag-over'));
-  dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('drag-over');handleFile(e.dataTransfer.files[0]);});
-  transcribeBtn.addEventListener('click',async()=>{if(selectedFile)await transcribe();});
-
-  async function transcribe(){
-    startTime=Date.now();
-    transcribeBtn.disabled=true;transcribeBtn.classList.add('loading');
-    transcribeBtn.innerHTML='<div class="spinner"></div> Processing...';
-    waveform.classList.add('animating');
-    statusArea.classList.add('visible');setStatus('Uploading audio...',false,15);
-    resultCard.classList.remove('visible');
-    const fd=new FormData();
-    fd.append('file',selectedFile);
-    if(langSelect.value)fd.append('language',langSelect.value);
-    if(modelSelect.value)fd.append('model',modelSelect.value);
-    try{
-      let p=20;
-      const t=setInterval(()=>{p=Math.min(p+8,60);progressBar.style.width=p+'%';},400);
-      const r=await fetch('/api/transcribe',{method:'POST',body:fd});
-      clearInterval(t);
-      if(!r.ok){let m=`Server error ${r.status}`;try{const e=await r.json();m=e.error||e.message||m;}catch{}throw new Error(m);}
-      setStatus('Transcribing...',false,80);
-      const data=await r.json();
-      const elapsed=((Date.now()-startTime)/1000).toFixed(1);
-      progressBar.style.width='100%';setStatus('Done!','success',100);
-      const text=data.text||data.transcription||data.result||JSON.stringify(data);
-      transcriptData=text;resultText.textContent=text;
-      buildMeta(data,elapsed);resultCard.classList.add('visible');
-      setTimeout(()=>resultCard.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
-    }catch(err){
-      progressBar.style.width='0%';setStatus('Error: '+err.message,'error');showToast('Transcription failed');
-    }finally{
-      transcribeBtn.disabled=false;transcribeBtn.classList.remove('loading');
-      transcribeBtn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Transcribe again';
-      waveform.classList.remove('animating');
-    }
-  }
-
-  function setStatus(msg,type=false,progress=null){
-    statusText.className='status-text'+(type?' '+type:'');
-    statusMsg.textContent=msg;spinner.style.display=type?'none':'block';
-    if(progress!==null)progressBar.style.width=progress+'%';
-  }
-  function buildMeta(data,elapsed){
-    const items=[{key:'Time',val:elapsed+'s'},data.language&&{key:'Language',val:data.language},data.model&&{key:'Model',val:data.model},{key:'Words',val:words(transcriptData)}].filter(Boolean);
-    resultMeta.innerHTML=items.map(i=>`<div class="meta-item"><span class="meta-key">${i.key}</span><span class="meta-val">${i.val}</span></div>`).join('');
-  }
-  copyBtn.addEventListener('click',async()=>{
-    if(!transcriptData)return;
-    try{await navigator.clipboard.writeText(transcriptData);showToast('Copied to clipboard');}catch{showToast('Select text to copy manually');}
-  });
-  downloadBtn.addEventListener('click',()=>{
-    if(!transcriptData)return;
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([transcriptData],{type:'text/plain'}));
-    a.download=(selectedFile?selectedFile.name.replace(/\.[^.]+$/,''):'transcript')+'-transcript.txt';
-    a.click();showToast('Downloaded');
-  });
-  clearBtn.addEventListener('click',()=>{
-    resultCard.classList.remove('visible');statusArea.classList.remove('visible');
-    selectedFile=null;transcriptData=null;fileInput.value='';
-    dropZone.classList.remove('has-file');fileName.style.display='none';
-    uploadLabel.textContent='Tap to upload audio';uploadHint.textContent='.m4a \u00b7 .wav \u00b7 .mp3 \u00b7 .ogg';
-    transcribeBtn.disabled=true;
-    transcribeBtn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Transcribe';
-    progressBar.style.width='0%';
-  });
-  let toastTimer;
-  function showToast(msg){toast.textContent=msg;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2200);}
-  function fmt(b){if(b<1024)return b+' B';if(b<1048576)return (b/1024).toFixed(1)+' KB';return (b/1048576).toFixed(1)+' MB';}
-  function words(t){return t?.trim().split(/\s+/).filter(Boolean).length??0;}
-</script>
-</body>
-</html>
+</body></html>
