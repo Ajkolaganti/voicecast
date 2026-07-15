@@ -247,7 +247,10 @@
     try{
       var p=20;
       var t=setInterval(function(){p=Math.min(p+8,60);progressBar.style.width=p+'%';},400);
-      var r=await fetch('/api/transcribe',{method:'POST',body:fd});
+      var headers = {};
+      var authToken = localStorage.getItem('vc_token');
+      if (authToken) headers.Authorization = 'Bearer ' + authToken;
+      var r=await fetch('/api/transcribe',{method:'POST',headers:headers,body:fd});
       clearInterval(t);
       if(!r.ok){var m='Server error '+r.status;try{var ej=await r.json();m=ej.error||ej.message||m;}catch{}throw new Error(m);}
       setStatus('Transcribing...',false,80);
@@ -272,10 +275,11 @@
   async function saveTranscript(text, data, elapsed) {
     try {
       var tok = localStorage.getItem('vc_token');
-      if (!tok) return; // not logged in, skip save
+      var headers = { 'Content-Type': 'application/json' };
+      if (tok) headers.Authorization = 'Bearer ' + tok;
       await fetch('/api/transcripts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },
+        headers: headers,
         body: JSON.stringify({
           fileName: selectedFile ? selectedFile.name : 'recording',
           fileSize: selectedFile ? selectedFile.size : 0,
@@ -327,26 +331,45 @@
 </script>
 <script>
 (function vcAuth() {
-  try {
-    var tok = localStorage.getItem('vc_token');
-    if (!tok) return;
-    var parts = tok.split('.');
-    if (parts.length !== 3) { localStorage.removeItem('vc_token'); return; }
-    var payload = JSON.parse(atob(parts[1]));
-    if (!payload.exp || payload.exp * 1000 < Date.now()) {
-      localStorage.removeItem('vc_token'); return;
-    }
-    var el = function(id) { return document.getElementById(id); };
+  var el = function(id) { return document.getElementById(id); };
+  function showUser(nameText) {
     var login = el('navLogin'), signup = el('navSignup'), logout = el('navLogout'), name = el('navName');
     if (login)  login.style.display  = 'none';
     if (signup) signup.style.display = 'none';
     if (logout) logout.style.display = 'inline-block';
-    if (name)   { name.textContent = payload.name || payload.email; name.style.display = 'inline'; }
+    if (name)   { name.textContent = nameText || 'Account'; name.style.display = 'inline'; }
+  }
+  function loadUserFromCookie() {
+    fetch('/api/auth/me').then(function(res) {
+      if (!res.ok) throw new Error('unauthorized');
+      return res.json();
+    }).then(function(user) {
+      showUser(user.firstName || user.email);
+    }).catch(function() {
+      window.location.href = '/login.html?next=%2Fapp.html';
+    });
+  }
+
+  try {
+    var tok = localStorage.getItem('vc_token');
+    if (!tok) {
+      loadUserFromCookie();
+      return;
+    }
+    var parts = tok.split('.');
+    if (parts.length !== 3) { localStorage.removeItem('vc_token'); loadUserFromCookie(); return; }
+    var payload = JSON.parse(atob(parts[1]));
+    if (!payload.exp || payload.exp * 1000 < Date.now()) {
+      localStorage.removeItem('vc_token'); loadUserFromCookie(); return;
+    }
+    showUser(payload.name || payload.email);
   } catch(e) { localStorage.removeItem('vc_token'); }
 })();
 function vcLogout() {
   localStorage.removeItem('vc_token');
-  window.location.href = '/login.html';
+  fetch('/api/auth/logout', { method: 'POST' }).finally(function() {
+    window.location.href = '/login.html';
+  });
 }
 </script>
 </body>

@@ -8,6 +8,7 @@
 
 - **Frontend:** Vanilla HTML/CSS/JS — Space Mono + lime `#CAFF3C` on near-black `#0A0F08`
 - **Proxy:** Vercel serverless functions (`/api/transcribe`, `/api/health`)
+- **Auth:** JWT sessions with HttpOnly cookies protecting `/app.html` and transcription
 - **Backend:** Whisper AI transcription API on Railway
 
 ## Structure
@@ -17,20 +18,28 @@ api/
   transcribe.js   # Proxy POST /transcribe → Railway backend
   health.js       # Proxy GET /health → Railway backend
 public/
-  index.html      # Full single-file frontend
+  index.html      # Public landing page
+  login.html      # Login page
+  signup.html     # Signup page
+protected/
+  app.html        # Authenticated transcription app served by /api/app
 vercel.json       # Routing config
 ```
 
 ## Development
 
-Edit `public/index.html` for UI changes. Push to `dev` branch — Vercel auto-deploys.
+Edit `protected/app.html` for authenticated app UI changes and `public/index.html` for landing-page changes. Push to `dev` branch — Vercel auto-deploys.
 
 ## API Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/health` | Backend health check |
-| `POST` | `/api/transcribe` | Upload audio file for transcription |
+| `POST` | `/api/transcribe` | Authenticated audio upload for transcription |
+| `POST` | `/api/auth/login` | Log in and set the session cookie |
+| `POST` | `/api/auth/signup` | Create an account and set the session cookie |
+| `POST` | `/api/auth/logout` | Clear the session cookie |
+| `GET` | `/api/auth/me` | Return the authenticated user profile |
 
 ### POST /api/transcribe
 

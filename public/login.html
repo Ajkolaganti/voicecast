@@ -66,7 +66,18 @@
       var tok = localStorage.getItem('vc_token');
       if (!tok) return;
       var p = JSON.parse(atob(tok.split('.')[1]));
-      if (p.exp * 1000 > Date.now()) window.location.replace('/app.html');
+      if (p.exp * 1000 <= Date.now()) {
+        localStorage.removeItem('vc_token');
+        return;
+      }
+
+      fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + tok }
+      }).then(function(res) {
+        if (res.ok) window.location.replace('/app.html');
+        else localStorage.removeItem('vc_token');
+      }).catch(function() {});
     } catch(e) { localStorage.removeItem('vc_token'); }
   })();
 

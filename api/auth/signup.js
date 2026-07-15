@@ -9,7 +9,7 @@
 
 import { FieldValue }                       from 'firebase-admin/firestore';
 import { getDb, COLLECTIONS }              from '../../lib/firebase.js';
-import { hashPassword, signToken, setCors } from '../../lib/auth.js';
+import { hashPassword, signToken, setCors, createSessionCookie } from '../../lib/auth.js';
 
 export const config = { api: { bodyParser: true } };
 
@@ -67,6 +67,7 @@ export default async function handler(req, res) {
   }
 
   const token = signToken({ sub: uid, email: emailClean, name: firstName.trim() });
+  res.setHeader('Set-Cookie', createSessionCookie(token, req));
   return res.status(201).json({
     token,
     user: { id: uid, email: emailClean, firstName: firstName.trim(), lastName: lastName.trim(), promoConsent: Boolean(promoConsent) },

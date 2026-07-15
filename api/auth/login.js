@@ -6,7 +6,7 @@
 
 import { FieldValue }                             from 'firebase-admin/firestore';
 import { getDb, COLLECTIONS }                    from '../../lib/firebase.js';
-import { verifyPassword, signToken, setCors }    from '../../lib/auth.js';
+import { verifyPassword, signToken, setCors, createSessionCookie } from '../../lib/auth.js';
 
 export const config = { api: { bodyParser: true } };
 
@@ -47,6 +47,7 @@ export default async function handler(req, res) {
     .catch(err => console.error('[login] lastLoginAt update:', err.message));
 
   const token = signToken({ sub: uid, email: emailClean, name: user.firstName });
+  res.setHeader('Set-Cookie', createSessionCookie(token, req));
   return res.status(200).json({
     token,
     user: { id: uid, email: user.email, firstName: user.firstName, lastName: user.lastName, promoConsent: user.promoConsent, createdAt: user.createdAt?.toDate?.()?.toISOString() ?? null },
