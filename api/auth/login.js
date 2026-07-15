@@ -38,6 +38,10 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Incorrect email or password.' });
 
   const user  = userSnap.data();
+  if (!user.passwordHash) {
+    return res.status(401).json({ error: 'This account uses Google Sign-In. Continue with Google.' });
+  }
+
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) return res.status(401).json({ error: 'Incorrect email or password.' });
 

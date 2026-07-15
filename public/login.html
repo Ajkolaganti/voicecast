@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Log in — VoiceCast</title>
   <link rel="stylesheet" href="/shared.css" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     .auth-page{min-height:100dvh;display:flex;flex-direction:column;}
     .auth-body{flex:1;display:flex;align-items:center;justify-content:center;padding:48px 24px;}
@@ -22,6 +23,10 @@
     .forgot-row{display:flex;justify-content:flex-end;}
     .forgot-link{font-family:var(--mono);font-size:10px;color:var(--muted);text-decoration:none;}
     .forgot-link:hover{color:var(--lime);}
+    .google-auth{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+    .google-button-shell{min-height:44px;display:flex;justify-content:center;}
+    .google-terms{font-size:11px;color:var(--muted);line-height:1.5;text-align:center;}
+    .google-terms a{color:var(--lime);text-decoration:none;}
   </style>
 </head>
 <body>
@@ -36,6 +41,11 @@
     <h1 class="auth-title">Welcome back</h1>
     <p class="auth-subtitle">Log in to access your transcription history and settings.</p>
     <div id="alertBox" style="display:none;margin-bottom:16px;"></div>
+    <div class="google-auth" id="googleAuthWrap">
+      <div class="google-button-shell" id="googleLoginButton"></div>
+      <p class="google-terms">By continuing with Google, you agree to the <a href="/terms.html" target="_blank">Terms</a> and <a href="/privacy.html" target="_blank">Privacy Policy</a>.</p>
+    </div>
+    <div class="divider" id="emailDivider" style="margin-bottom:18px;"><span>or email</span></div>
     <form class="auth-form" id="loginForm" novalidate>
       <div class="form-group">
         <label class="form-label" for="email">Email</label>
@@ -93,12 +103,83 @@
   var form = document.getElementById('loginForm');
   var submit = document.getElementById('submitBtn');
   var alertBox = document.getElementById('alertBox');
+  var googleAuthWrap = document.getElementById('googleAuthWrap');
+  var emailDivider = document.getElementById('emailDivider');
 
   function showAlert(msg, type) {
     alertBox.className = 'alert alert-' + (type || 'error');
     alertBox.textContent = msg;
     alertBox.style.display = 'block';
   }
+
+  function hideGoogleAuth() {
+    if (googleAuthWrap) googleAuthWrap.style.display = 'none';
+    if (emailDivider) emailDivider.style.display = 'none';
+  }
+
+  function redirectWithSession(data) {
+    if (data && data.token) localStorage.setItem('vc_token', data.token);
+    window.location.href = '/app.html';
+  }
+
+  function waitForGoogle(callback) {
+    var attempts = 0;
+    (function poll() {
+      if (window.google && google.accounts && google.accounts.id) return callback();
+      attempts += 1;
+      if (attempts > 40) return hideGoogleAuth();
+      setTimeout(poll, 100);
+    })();
+  }
+
+  async function handleGoogleCredential(response) {
+    if (!response || !response.credential) {
+      showAlert('Google sign-in did not return a credential.');
+      return;
+    }
+
+    showAlert('Signing in with Google…', 'success');
+    try {
+      var res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: response.credential, promoConsent: false })
+      });
+      var data = await res.json();
+      if (!res.ok) {
+        showAlert(data.error || 'Google sign-in failed. Please try again.');
+        return;
+      }
+      redirectWithSession(data);
+    } catch(err) {
+      showAlert('Network error. Please check your connection.');
+    }
+  }
+
+  function initGoogleAuth() {
+    fetch('/api/auth/google-config')
+      .then(function(res) { return res.ok ? res.json() : { clientId: '' }; })
+      .then(function(config) {
+        if (!config.clientId) return hideGoogleAuth();
+        waitForGoogle(function() {
+          google.accounts.id.initialize({
+            client_id: config.clientId,
+            callback: handleGoogleCredential
+          });
+          google.accounts.id.renderButton(document.getElementById('googleLoginButton'), {
+            theme: 'filled_black',
+            size: 'large',
+            type: 'standard',
+            shape: 'rectangular',
+            text: 'signin_with',
+            width: 336
+          });
+        });
+      })
+      .catch(hideGoogleAuth);
+  }
+
+  initGoogleAuth();
 
   form.addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -123,8 +204,7 @@
         submit.innerHTML = 'Log in';
         return;
       }
-      localStorage.setItem('vc_token', data.token);
-      window.location.href = '/app.html';
+      redirectWithSession(data);
     } catch(err) {
       showAlert('Network error. Please check your connection.');
       submit.disabled = false;

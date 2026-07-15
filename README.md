@@ -8,7 +8,7 @@
 
 - **Frontend:** Vanilla HTML/CSS/JS — Space Mono + lime `#CAFF3C` on near-black `#0A0F08`
 - **Proxy:** Vercel serverless functions (`/api/transcribe`, `/api/health`)
-- **Auth:** JWT sessions with HttpOnly cookies protecting `/app.html` and transcription
+- **Auth:** Email/password and Google Sign-In with JWT HttpOnly sessions protecting `/app.html` and transcription
 - **Backend:** Whisper AI transcription API on Railway
 
 ## Structure
@@ -38,8 +38,19 @@ Edit `protected/app.html` for authenticated app UI changes and `public/index.htm
 | `POST` | `/api/transcribe` | Authenticated audio upload for transcription |
 | `POST` | `/api/auth/login` | Log in and set the session cookie |
 | `POST` | `/api/auth/signup` | Create an account and set the session cookie |
+| `POST` | `/api/auth/google` | Verify Google ID token and set the session cookie |
 | `POST` | `/api/auth/logout` | Clear the session cookie |
 | `GET` | `/api/auth/me` | Return the authenticated user profile |
+
+## Environment Variables
+
+Required for auth and persistence:
+
+- `JWT_SECRET` — signs VoiceCast session tokens
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
+- `GOOGLE_CLIENT_ID` — OAuth web client ID used by Google Identity Services
 
 ### POST /api/transcribe
 
