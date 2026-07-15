@@ -3,8 +3,7 @@
  * DELETE /api/transcripts/:id  — delete (owner only)
  */
 
-import { ObjectId }             from 'mongodb';
-import { getDb }                from '../../lib/mongodb.js';
+import { getDb, COLLECTIONS }   from '../../lib/firebase.js';
 import { requireAuth, setCors } from '../../lib/auth.js';
 
 export const config = { api: { bodyParser: false } };
@@ -17,34 +16,29 @@ export default async function handler(req, res) {
   if (!payload) return;
 
   const { id } = req.query;
-  if (!id || !ObjectId.isValid(id))
-    return res.status(400).json({ error: 'Invalid transcript ID.' });
+  if (!id) return res.status(400).json({ error: 'Missing transcript ID.' });
 
   let db;
-  try {
-    db = await getDb();
-  } catch {
-    return res.status(503).json({ error: 'Database unavailable.' });
-  }
+  try { db = getDb(); } catch { return res.status(503).json({ error: 'Firebase is not configured.' }); }
 
-  const col    = db.collection('transcripts');
-  const userId = new ObjectId(payload.sub);
-  const docId  = new ObjectId(id);
+  const docRef = db.collection(COLLECTIONS.TRANSCRIPTS).doc(id);
+  const snap   = await docRef.get();
+
+  if (!snap.exists) return res.status(404).json({ error: 'Transcript not found.' });
+
+  const data = snap.data();
+  if (data.userId !== payload.sub) return res.status(403).json({ error: 'Access denied.' });
 
   if (req.method === 'GET') {
-    const doc = await col.findOne({ _id: docId, userId });
-    if (!doc) return res.status(404).json({ error: 'Transcript not found.' });
     return res.status(200).json({
-      id: doc._id.toString(), fileName: doc.fileName, fileSize: doc.fileSize,
-      text: doc.text, wordCount: doc.wordCount, language: doc.language,
-      model: doc.model, duration: doc.duration, createdAt: doc.createdAt?.toISOString(),
+      id: snap.id, fileName: data.fileName, fileSize: data.fileSize, text: data.text,
+      wordCount: data.wordCount, language: data.language, model: data.model,
+      duration: data.duration, createdAt: data.createdAt?.toDate?.()?.toISOString() ?? null,
     });
   }
 
   if (req.method === 'DELETE') {
-    const result = await col.deleteOne({ _id: docId, userId });
-    if (result.deletedCount === 0)
-      return res.status(404).json({ error: 'Transcript not found or already deleted.' });
+    await docRef.delete();
     return res.status(200).json({ deleted: true, id });
   }
 
