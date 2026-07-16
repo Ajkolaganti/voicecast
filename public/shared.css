@@ -82,6 +82,8 @@ body::before {
 .footer-link.active { color: var(--lime); }
 .footer-copy { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.3px; }
 .footer-copy span { color: var(--lime); }
+.footer-copy a { color: var(--lime); text-decoration: none; }
+.footer-copy a:hover { text-decoration: underline; }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--mono); font-size: 13px; font-weight: 700; border: none; border-radius: var(--r-sm); cursor: pointer; padding: 0 20px; height: 48px; transition: opacity 0.2s, transform 0.15s; text-decoration: none; letter-spacing: 0.3px; white-space: nowrap; }
 .btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }

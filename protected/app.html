@@ -36,6 +36,12 @@
     .hero-title { font-family: 'Space Mono', monospace; font-size: clamp(26px, 7vw, 34px); font-weight: 700; color: var(--white); line-height: 1.15; letter-spacing: -1px; }
     .hero-title em { font-style: normal; color: var(--lime); }
     .hero-sub { margin-top: 10px; font-size: 14px; color: var(--muted); line-height: 1.6; font-weight: 300; }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .tab-btn { height: 42px; background: var(--card); color: var(--muted); border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; cursor: pointer; transition: background .2s, border-color .2s, color .2s; }
+    .tab-btn:hover { border-color: var(--lime); color: var(--white); }
+    .tab-btn.active { background: var(--lime); border-color: var(--lime); color: var(--bg); }
+    .panel { display: none; }
+    .panel.active { display: block; }
     .upload-card { background: var(--card); border: 1.5px dashed var(--border); border-radius: var(--radius); padding: 32px 20px; text-align: center; transition: border-color .25s, background .25s; cursor: pointer; position: relative; overflow: hidden; }
     .upload-card::before { content: ''; position: absolute; inset: 0; background: var(--lime-glow2); opacity: 0; transition: opacity .25s; pointer-events: none; }
     .upload-card.drag-over, .upload-card.has-file { border-color: var(--lime); }
@@ -90,6 +96,26 @@
     .meta-item { display: flex; flex-direction: column; gap: 2px; }
     .meta-key { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
     .meta-val { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--lime); }
+    .history-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .history-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; border-bottom: 1px solid var(--border); }
+    .history-kicker { font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; color: var(--lime); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
+    .history-heading { font-family: 'Space Mono', monospace; font-size: 18px; line-height: 1.2; color: var(--white); }
+    .history-list { display: flex; flex-direction: column; }
+    .history-item { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    .history-item:last-child { border-bottom: none; }
+    .history-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .history-title { font-size: 14px; font-weight: 600; color: var(--white); line-height: 1.35; word-break: break-word; }
+    .history-date { flex-shrink: 0; font-family: 'Space Mono', monospace; font-size: 9px; color: var(--muted); text-align: right; white-space: nowrap; }
+    .history-preview { font-size: 13px; color: var(--body); line-height: 1.55; margin-bottom: 12px; }
+    .history-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .history-pill { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--muted); border: 1px solid var(--border); border-radius: 100px; padding: 3px 8px; }
+    .history-actions { display: flex; gap: 8px; }
+    .history-action { height: 34px; flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--white); font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; cursor: pointer; transition: border-color .2s, color .2s; }
+    .history-action:hover { border-color: var(--lime); color: var(--lime); }
+    .history-action.danger:hover { border-color: var(--error); color: var(--error); }
+    .history-empty { padding: 32px 18px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .history-more { margin: 14px 16px 16px; width: calc(100% - 32px); height: 42px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--lime); font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .history-more:hover { border-color: var(--lime); }
     .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--white); color: var(--bg); font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; padding: 10px 20px; border-radius: 100px; z-index: 999; transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s; opacity: 0; white-space: nowrap; pointer-events: none; }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     .footer { margin-top: 40px; padding: 0 0 16px; display: flex; align-items: center; justify-content: space-between; }
@@ -128,65 +154,86 @@
     <h1 class="hero-title">Drop audio.<br><em>Get words.</em></h1>
     <p class="hero-sub">Upload any voice recording and get a clean transcript in seconds — powered by Whisper AI.</p>
   </section>
-  <div class="upload-card" id="dropZone" role="button" tabindex="0" aria-label="Upload audio file">
-    <div class="waveform" id="waveform">
-      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-    </div>
-    <div class="upload-icon">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
-        <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-      </svg>
-    </div>
-    <p class="upload-label" id="uploadLabel">Tap to upload audio</p>
-    <p class="upload-hint" id="uploadHint">.m4a &middot; .wav &middot; .mp3 &middot; .ogg</p>
-    <span class="file-name" id="fileName" style="display:none"></span>
-    <input type="file" id="fileInput" accept=".m4a,.wav,.mp3,.ogg,.flac,.aac,.webm" />
+  <div class="tabs" role="tablist" aria-label="VoiceCast views">
+    <button class="tab-btn active" id="tabTranscribe" type="button" role="tab" aria-selected="true" aria-controls="transcribePanel">Transcribe</button>
+    <button class="tab-btn" id="tabHistory" type="button" role="tab" aria-selected="false" aria-controls="historyPanel">History</button>
   </div>
-  <div class="options-row">
-    <div class="select-wrap">
-      <span class="select-label">Language</span>
-      <select id="langSelect">
-        <option value="">Auto-detect</option>
-        <option value="en">English</option><option value="es">Spanish</option><option value="fr">French</option>
-        <option value="de">German</option><option value="hi">Hindi</option><option value="pt">Portuguese</option>
-        <option value="it">Italian</option><option value="ja">Japanese</option><option value="zh">Chinese</option>
-        <option value="ar">Arabic</option><option value="ko">Korean</option><option value="ru">Russian</option>
-      </select>
+  <section class="panel active" id="transcribePanel" role="tabpanel" aria-labelledby="tabTranscribe">
+    <div class="upload-card" id="dropZone" role="button" tabindex="0" aria-label="Upload audio file">
+      <div class="waveform" id="waveform">
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      </div>
+      <div class="upload-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+        </svg>
+      </div>
+      <p class="upload-label" id="uploadLabel">Tap to upload audio</p>
+      <p class="upload-hint" id="uploadHint">.m4a &middot; .wav &middot; .mp3 &middot; .ogg</p>
+      <span class="file-name" id="fileName" style="display:none"></span>
+      <input type="file" id="fileInput" accept=".m4a,.wav,.mp3,.ogg,.flac,.aac,.webm" />
     </div>
-    <div class="select-wrap">
-      <span class="select-label">Model</span>
-      <select id="modelSelect">
-        <option value="">Default</option>
-        <option value="tiny">Tiny &middot; fastest</option><option value="base">Base</option>
-        <option value="small">Small</option><option value="medium">Medium</option>
-        <option value="large">Large &middot; best</option>
-      </select>
-    </div>
-  </div>
-  <button class="btn-transcribe" id="transcribeBtn" disabled>
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-    Transcribe
-  </button>
-  <div class="status-area" id="statusArea">
-    <div class="status-bar-wrap"><div class="status-bar-fill" id="progressBar"></div></div>
-    <p class="status-text" id="statusText"><span class="spinner" id="spinner"></span><span id="statusMsg">Uploading...</span></p>
-  </div>
-  <div class="result-card" id="resultCard">
-    <div class="result-header">
-      <span class="result-title"><svg width="12" height="12" viewBox="0 0 24 24" fill="#CAFF3C"><circle cx="12" cy="12" r="10"/></svg>Transcript</span>
-      <div class="result-actions">
-        <button class="icon-btn" id="copyBtn" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-        <button class="icon-btn" id="downloadBtn" title="Download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
-        <button class="icon-btn" id="clearBtn" title="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div class="options-row">
+      <div class="select-wrap">
+        <span class="select-label">Language</span>
+        <select id="langSelect">
+          <option value="">Auto-detect</option>
+          <option value="en">English</option><option value="es">Spanish</option><option value="fr">French</option>
+          <option value="de">German</option><option value="hi">Hindi</option><option value="pt">Portuguese</option>
+          <option value="it">Italian</option><option value="ja">Japanese</option><option value="zh">Chinese</option>
+          <option value="ar">Arabic</option><option value="ko">Korean</option><option value="ru">Russian</option>
+        </select>
+      </div>
+      <div class="select-wrap">
+        <span class="select-label">Model</span>
+        <select id="modelSelect">
+          <option value="">Default</option>
+          <option value="tiny">Tiny &middot; fastest</option><option value="base">Base</option>
+          <option value="small">Small</option><option value="medium">Medium</option>
+          <option value="large">Large &middot; best</option>
+        </select>
       </div>
     </div>
-    <div class="result-body"><p class="result-text" id="resultText"></p></div>
-    <div class="result-meta" id="resultMeta"></div>
-  </div>
+    <button class="btn-transcribe" id="transcribeBtn" disabled>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Transcribe
+    </button>
+    <div class="status-area" id="statusArea">
+      <div class="status-bar-wrap"><div class="status-bar-fill" id="progressBar"></div></div>
+      <p class="status-text" id="statusText"><span class="spinner" id="spinner"></span><span id="statusMsg">Uploading...</span></p>
+    </div>
+    <div class="result-card" id="resultCard">
+      <div class="result-header">
+        <span class="result-title"><svg width="12" height="12" viewBox="0 0 24 24" fill="#CAFF3C"><circle cx="12" cy="12" r="10"/></svg>Transcript</span>
+        <div class="result-actions">
+          <button class="icon-btn" id="copyBtn" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          <button class="icon-btn" id="downloadBtn" title="Download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+          <button class="icon-btn" id="clearBtn" title="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+      </div>
+      <div class="result-body"><p class="result-text" id="resultText"></p></div>
+      <div class="result-meta" id="resultMeta"></div>
+    </div>
+  </section>
+  <section class="panel" id="historyPanel" role="tabpanel" aria-labelledby="tabHistory" hidden>
+    <div class="history-card">
+      <div class="history-header">
+        <div>
+          <p class="history-kicker">// saved transcripts</p>
+          <h2 class="history-heading">History</h2>
+        </div>
+        <button class="icon-btn" id="refreshHistoryBtn" type="button" title="Refresh history">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/></svg>
+        </button>
+      </div>
+      <div class="history-list" id="historyList"></div>
+      <button class="history-more" id="loadMoreHistoryBtn" type="button" style="display:none">Load more</button>
+    </div>
+  </section>
   <footer class="footer">
-    <p class="footer-brand">by <span>Sidhiratech</span></p>
-    <a class="footer-link" href="https://web-production-0f5d1.up.railway.app/" target="_blank" rel="noopener">API status ↗</a>
+    <p class="footer-brand">by <span>aj</span></p>
+    <a class="footer-link" href="https://www.instagram.com/hey__jay93" target="_blank" rel="noopener">@hey__jay93</a>
   </footer>
 </div>
 <div class="toast" id="toast"></div>
@@ -202,8 +249,12 @@
   clearBtn=document.getElementById('clearBtn'),waveform=document.getElementById('waveform'),
   healthDot=document.getElementById('healthDot'),healthLabel=document.getElementById('healthLabel'),
   toast=document.getElementById('toast'),langSelect=document.getElementById('langSelect'),
-  modelSelect=document.getElementById('modelSelect');
-  var selectedFile=null,transcriptData=null,startTime=0;
+  modelSelect=document.getElementById('modelSelect'),tabTranscribe=document.getElementById('tabTranscribe'),
+  tabHistory=document.getElementById('tabHistory'),transcribePanel=document.getElementById('transcribePanel'),
+  historyPanel=document.getElementById('historyPanel'),historyList=document.getElementById('historyList'),
+  refreshHistoryBtn=document.getElementById('refreshHistoryBtn'),loadMoreHistoryBtn=document.getElementById('loadMoreHistoryBtn');
+  var selectedFile=null,transcriptData=null,transcriptFileName='transcript',startTime=0;
+  var historyPage=1,historyHasMore=false,historyLoading=false,historyLoaded=false;
 
   async function checkHealth(){
     try{
@@ -218,6 +269,7 @@
   function handleFile(f){
     if(!f)return;
     selectedFile=f;
+    transcriptFileName=f.name;
     dropZone.classList.add('has-file');
     fileName.textContent=f.name;fileName.style.display='inline-block';
     uploadLabel.textContent='Ready to transcribe';
@@ -232,6 +284,111 @@
   dropZone.addEventListener('dragleave',function(){dropZone.classList.remove('drag-over');});
   dropZone.addEventListener('drop',function(e){e.preventDefault();dropZone.classList.remove('drag-over');handleFile(e.dataTransfer.files[0]);});
   transcribeBtn.addEventListener('click',async function(){if(selectedFile)await transcribe();});
+  tabTranscribe.addEventListener('click',function(){switchTab('transcribe');});
+  tabHistory.addEventListener('click',function(){switchTab('history');});
+  refreshHistoryBtn.addEventListener('click',function(){loadHistory(true);});
+  loadMoreHistoryBtn.addEventListener('click',function(){loadHistory(false);});
+  historyList.addEventListener('click',function(e){
+    var button=e.target.closest('button[data-history-action]');
+    if(!button)return;
+    var id=button.getAttribute('data-history-id');
+    if(button.getAttribute('data-history-action')==='view')openHistoryTranscript(id);
+    if(button.getAttribute('data-history-action')==='delete')deleteHistoryTranscript(id);
+  });
+
+  function authHeaders(extra){
+    var headers=extra||{};
+    var tok=localStorage.getItem('vc_token');
+    if(tok)headers.Authorization='Bearer '+tok;
+    return headers;
+  }
+
+  function switchTab(view){
+    var showingHistory=view==='history';
+    tabTranscribe.classList.toggle('active',!showingHistory);
+    tabHistory.classList.toggle('active',showingHistory);
+    tabTranscribe.setAttribute('aria-selected',String(!showingHistory));
+    tabHistory.setAttribute('aria-selected',String(showingHistory));
+    transcribePanel.classList.toggle('active',!showingHistory);
+    historyPanel.classList.toggle('active',showingHistory);
+    transcribePanel.hidden=showingHistory;
+    historyPanel.hidden=!showingHistory;
+    if(showingHistory&&!historyLoaded)loadHistory(true);
+  }
+
+  async function loadHistory(reset){
+    if(historyLoading)return;
+    if(reset){historyPage=1;historyHasMore=false;}
+    if(!reset&&!historyHasMore)return;
+    historyLoading=true;
+    loadMoreHistoryBtn.disabled=true;
+    loadMoreHistoryBtn.textContent='Loading...';
+    if(reset)historyList.innerHTML='<div class="history-empty">Loading transcripts...</div>';
+    try{
+      var r=await fetch('/api/transcripts?page='+historyPage+'&limit=10',{headers:authHeaders()});
+      if(!r.ok)throw new Error('History unavailable');
+      var data=await r.json();
+      renderHistory(data.results||[],reset);
+      var page=data.pagination||{};
+      historyHasMore=(page.page||historyPage)<(page.pages||0);
+      historyPage=(page.page||historyPage)+1;
+      loadMoreHistoryBtn.style.display=historyHasMore?'block':'none';
+      historyLoaded=true;
+    }catch(err){
+      if(reset)historyList.innerHTML='<div class="history-empty">Could not load history. Try again in a moment.</div>';
+      showToast('History failed');
+    }finally{
+      historyLoading=false;
+      loadMoreHistoryBtn.disabled=false;
+      loadMoreHistoryBtn.textContent='Load more';
+    }
+  }
+
+  function renderHistory(items,reset){
+    if(reset)historyList.innerHTML='';
+    if(!items.length&&reset){
+      historyList.innerHTML='<div class="history-empty">No saved transcripts yet. Your completed transcriptions will appear here.</div>';
+      return;
+    }
+    historyList.insertAdjacentHTML('beforeend',items.map(function(item){
+      var wordsText=item.wordCount?item.wordCount+' words':'Transcript';
+      var lang=item.language||'auto';
+      var model=item.model||'default';
+      return '<article class="history-item">'+
+        '<div class="history-title-row"><h3 class="history-title">'+esc(item.fileName||'recording')+'</h3><span class="history-date">'+esc(shortDate(item.createdAt))+'</span></div>'+
+        '<p class="history-preview">'+esc(item.preview||'No preview available.')+'</p>'+
+        '<div class="history-meta"><span class="history-pill">'+esc(wordsText)+'</span><span class="history-pill">'+esc(lang)+'</span><span class="history-pill">'+esc(model)+'</span></div>'+
+        '<div class="history-actions"><button class="history-action" type="button" data-history-action="view" data-history-id="'+esc(item.id)+'">View</button><button class="history-action danger" type="button" data-history-action="delete" data-history-id="'+esc(item.id)+'">Delete</button></div>'+
+      '</article>';
+    }).join(''));
+  }
+
+  async function openHistoryTranscript(id){
+    if(!id)return;
+    try{
+      var r=await fetch('/api/transcripts/'+encodeURIComponent(id),{headers:authHeaders()});
+      if(!r.ok)throw new Error('Transcript unavailable');
+      var data=await r.json();
+      var text=getTranscriptText(data);
+      transcriptFileName=data.fileName||'transcript';
+      showTranscript(text,data,data.duration?Number(data.duration).toFixed(1):null);
+      switchTab('transcribe');
+    }catch(err){
+      showToast('Could not open transcript');
+    }
+  }
+
+  async function deleteHistoryTranscript(id){
+    if(!id||!confirm('Delete this transcript?'))return;
+    try{
+      var r=await fetch('/api/transcripts/'+encodeURIComponent(id),{method:'DELETE',headers:authHeaders()});
+      if(!r.ok)throw new Error('Delete failed');
+      showToast('Deleted');
+      loadHistory(true);
+    }catch(err){
+      showToast('Delete failed');
+    }
+  }
 
   async function transcribe(){
     startTime=Date.now();
@@ -247,21 +404,15 @@
     try{
       var p=20;
       var t=setInterval(function(){p=Math.min(p+8,60);progressBar.style.width=p+'%';},400);
-      var headers = {};
-      var authToken = localStorage.getItem('vc_token');
-      if (authToken) headers.Authorization = 'Bearer ' + authToken;
-      var r=await fetch('/api/transcribe',{method:'POST',headers:headers,body:fd});
+      var r=await fetch('/api/transcribe',{method:'POST',headers:authHeaders(),body:fd});
       clearInterval(t);
       if(!r.ok){var m='Server error '+r.status;try{var ej=await r.json();m=ej.error||ej.message||m;}catch{}throw new Error(m);}
       setStatus('Transcribing...',false,80);
       var data=await r.json();
       var elapsed=((Date.now()-startTime)/1000).toFixed(1);
       progressBar.style.width='100%';setStatus('Done!','success',100);
-      var text=data.text||data.transcription||data.result||JSON.stringify(data);
-      transcriptData=text;resultText.textContent=text;
-      buildMeta(data,elapsed);resultCard.classList.add('visible');
-      setTimeout(function(){resultCard.scrollIntoView({behavior:'smooth',block:'nearest'});},100);
-      // Save to Firebase if logged in
+      var text=getTranscriptText(data);
+      showTranscript(text,data,elapsed);
       saveTranscript(text, data, elapsed);
     }catch(err){
       progressBar.style.width='0%';setStatus('Error: '+err.message,'error');showToast('Transcription failed');
@@ -274,12 +425,9 @@
 
   async function saveTranscript(text, data, elapsed) {
     try {
-      var tok = localStorage.getItem('vc_token');
-      var headers = { 'Content-Type': 'application/json' };
-      if (tok) headers.Authorization = 'Bearer ' + tok;
-      await fetch('/api/transcripts', {
+      var res=await fetch('/api/transcripts', {
         method: 'POST',
-        headers: headers,
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           fileName: selectedFile ? selectedFile.name : 'recording',
           fileSize: selectedFile ? selectedFile.size : 0,
@@ -289,8 +437,48 @@
           duration: parseFloat(elapsed) || 0
         })
       });
+      if(res.ok&&historyLoaded)loadHistory(true);
     } catch(e) { /* silent - saving history is best-effort */ }
   }
+
+  function showTranscript(text,data,elapsed){
+    transcriptData=text||'';
+    resultText.textContent=transcriptData;
+    buildMeta(data||{},elapsed);
+    resultCard.classList.add('visible');
+    setTimeout(function(){resultCard.scrollIntoView({behavior:'smooth',block:'nearest'});},100);
+  }
+
+  function getTranscriptText(data){
+    if(typeof data==='string')return data.trim();
+    if(!data||typeof data!=='object')return '';
+    var keys=['text','transcription','result','transcript'];
+    for(var i=0;i<keys.length;i++){
+      var value=data[keys[i]];
+      if(typeof value==='string'&&value.trim())return value.trim();
+    }
+    if(Array.isArray(data.segments))return formatSegments(data.segments);
+    return '';
+  }
+
+  function formatSegments(segments){
+    var blocks=[],paragraph=[];
+    segments.forEach(function(segment){
+      var text=cleanLine(segment&&segment.text);
+      if(!text)return;
+      if(/^step\s+\d+\.?$/i.test(text)){
+        if(paragraph.length)blocks.push(paragraph.join(' '));
+        blocks.push(text.slice(-1)==='.'?text:text+'.');
+        paragraph=[];
+        return;
+      }
+      paragraph.push(text);
+    });
+    if(paragraph.length)blocks.push(paragraph.join(' '));
+    return blocks.join('\n\n');
+  }
+
+  function cleanLine(value){return String(value||'').replace(/\s+/g,' ').trim();}
 
   function setStatus(msg,type,progress){
     statusText.className='status-text'+(type?' '+type:'');
@@ -298,11 +486,15 @@
     if(progress!=null)progressBar.style.width=progress+'%';
   }
   function buildMeta(data,elapsed){
-    var items=[{key:'Time',val:elapsed+'s'}];
+    var items=[];
+    if(elapsed)items.push({key:'Time',val:elapsed+'s'});
     if(data.language)items.push({key:'Language',val:data.language});
     if(data.model)items.push({key:'Model',val:data.model});
     items.push({key:'Words',val:words(transcriptData)});
-    resultMeta.innerHTML=items.map(function(i){return '<div class="meta-item"><span class="meta-key">'+i.key+'</span><span class="meta-val">'+i.val+'</span></div>';}).join('');
+    if(data.usage&&data.usage.daily)items.push({key:'Today left',val:data.usage.daily.remaining+'/'+data.usage.daily.limit});
+    if(data.usage&&data.usage.monthly)items.push({key:'Month left',val:data.usage.monthly.remaining+'/'+data.usage.monthly.limit});
+    if(data.createdAt)items.push({key:'Saved',val:shortDate(data.createdAt)});
+    resultMeta.innerHTML=items.map(function(i){return '<div class="meta-item"><span class="meta-key">'+esc(i.key)+'</span><span class="meta-val">'+esc(i.val)+'</span></div>';}).join('');
   }
   copyBtn.addEventListener('click',async function(){
     if(!transcriptData)return;
@@ -312,12 +504,12 @@
     if(!transcriptData)return;
     var a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([transcriptData],{type:'text/plain'}));
-    a.download=(selectedFile?selectedFile.name.replace(/\.[^.]+$/,''):'transcript')+'-transcript.txt';
+    a.download=(transcriptFileName||'transcript').replace(/\.[^.]+$/,'')+'-transcript.txt';
     a.click();showToast('Downloaded');
   });
   clearBtn.addEventListener('click',function(){
     resultCard.classList.remove('visible');statusArea.classList.remove('visible');
-    selectedFile=null;transcriptData=null;fileInput.value='';
+    selectedFile=null;transcriptData=null;transcriptFileName='transcript';fileInput.value='';
     dropZone.classList.remove('has-file');fileName.style.display='none';
     uploadLabel.textContent='Tap to upload audio';uploadHint.textContent='.m4a \u00b7 .wav \u00b7 .mp3 \u00b7 .ogg';
     transcribeBtn.disabled=true;
@@ -328,6 +520,8 @@
   function showToast(msg){toast.textContent=msg;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){toast.classList.remove('show');},2200);}
   function fmt(b){if(b<1024)return b+' B';if(b<1048576)return (b/1024).toFixed(1)+' KB';return (b/1048576).toFixed(1)+' MB';}
   function words(t){return t?t.trim().split(/\s+/).filter(Boolean).length:0;}
+  function shortDate(value){var d=new Date(value);if(!value||Number.isNaN(d.getTime()))return '';return d.toLocaleDateString(undefined,{month:'short',day:'numeric'});}
+  function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 </script>
 <script>
 (function vcAuth() {

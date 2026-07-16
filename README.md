@@ -54,6 +54,8 @@ Required for auth and persistence:
 
 ### POST /api/transcribe
 
+Each authenticated user can run up to **5 transcriptions per UTC day** and **50 transcriptions per UTC month**. Successful responses include remaining usage in `usage.daily` and `usage.monthly`; limit failures return HTTP `429`.
+
 **Body:** `multipart/form-data`
 - `file` (required) — audio file `.m4a`, `.wav`, `.mp3`, `.ogg`, `.flac`
 - `language` (optional) — ISO code e.g. `en`, `hi`, `es`
@@ -65,4 +67,4 @@ Required for auth and persistence:
 ```
 
 ---
-Built by [Sidhiratech](https://sidhiratech.com)
+Built by [aj](https://www.instagram.com/hey__jay93)

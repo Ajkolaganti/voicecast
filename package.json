@@ -2,7 +2,7 @@
   "name": "voicecast",
   "version": "1.0.0",
   "private": true,
-  "description": "VoiceCast — audio transcription SaaS by Sidhiratech",
+  "description": "VoiceCast — audio transcription SaaS by aj",
   "engines": { "node": ">=20" },
   "type": "module",
   "dependencies": {
