@@ -30,6 +30,8 @@
     .health-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); transition: background 0.3s; }
     .health-dot.online { background: var(--lime); box-shadow: 0 0 6px var(--lime); animation: pulse-dot 2s infinite; }
     .health-dot.offline { background: var(--error); }
+    .usage-pill { display: none; align-items: center; justify-content: center; min-width: 44px; height: 24px; padding: 0 8px; border-radius: 100px; background: var(--lime-glow); border: 1px solid rgba(202,255,60,.22); color: var(--lime); font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .usage-pill.low { color: var(--error); border-color: rgba(255,91,91,.35); background: rgba(255,91,91,.08); }
     @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     .hero { padding: 32px 0 24px; }
     .hero-eyebrow { font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700; color: var(--lime); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
@@ -125,6 +127,7 @@
     .footer-link:hover { color: var(--lime); }
     .spinner { width: 16px; height: 16px; border: 2px solid rgba(202,255,60,.3); border-top-color: var(--lime); border-radius: 50%; animation: spin .7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 430px) { .health-pill { padding: 4px 8px; } #healthLabel { display: none; } #navName { display: none !important; } }
     @media (prefers-reduced-motion: reduce) { .wave-bar, .spinner { animation: none; } }
     @media (min-width: 520px) { .app { padding: 0 24px 64px; } .upload-card { padding: 40px 32px; } }
   </style>
@@ -142,6 +145,7 @@
       <span class="health-dot" id="healthDot"></span>
       <span id="healthLabel">checking</span>
     </button>
+    <span class="usage-pill" id="usagePill" title="Transcriptions remaining">-- left</span>
     <span id="navName" style="font-family:'Space Mono',monospace;font-size:10px;color:#6B7D65;display:none;"></span>
     <a href="/login.html" id="navLogin" style="font-family:'Space Mono',monospace;font-size:11px;color:#6B7D65;text-decoration:none;padding:5px 10px;border-radius:8px;">Log in</a>
     <a href="/signup.html" id="navSignup" style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#0A0F08;background:#CAFF3C;padding:6px 12px;border-radius:8px;text-decoration:none;">Sign up</a>
@@ -251,7 +255,7 @@
   copyBtn=document.getElementById('copyBtn'),downloadBtn=document.getElementById('downloadBtn'),
   clearBtn=document.getElementById('clearBtn'),waveform=document.getElementById('waveform'),
   healthDot=document.getElementById('healthDot'),healthLabel=document.getElementById('healthLabel'),
-  toast=document.getElementById('toast'),langSelect=document.getElementById('langSelect'),
+  usagePill=document.getElementById('usagePill'),toast=document.getElementById('toast'),langSelect=document.getElementById('langSelect'),
   modelSelect=document.getElementById('modelSelect'),tabTranscribe=document.getElementById('tabTranscribe'),
   tabHistory=document.getElementById('tabHistory'),transcribePanel=document.getElementById('transcribePanel'),
   historyPanel=document.getElementById('historyPanel'),historyList=document.getElementById('historyList'),
@@ -305,6 +309,25 @@
     var tok=localStorage.getItem('vc_token');
     if(tok)headers.Authorization='Bearer '+tok;
     return headers;
+  }
+
+  function updateUsagePill(usage){
+    if(!usage||!usage.daily)return;
+    var daily=usage.daily;
+    var monthly=usage.monthly||{};
+    usagePill.textContent=daily.remaining+' left';
+    usagePill.title='Daily: '+daily.remaining+'/'+daily.limit+' left. Monthly: '+(monthly.remaining==null?'--':monthly.remaining)+'/'+(monthly.limit||'--')+' left.';
+    usagePill.classList.toggle('low',Number(daily.remaining)<=1);
+    usagePill.style.display='inline-flex';
+  }
+
+  async function refreshUsage(){
+    try{
+      var r=await fetch('/api/auth/me',{headers:authHeaders()});
+      if(!r.ok)return;
+      var user=await r.json();
+      updateUsagePill(user.usage);
+    }catch(err){}
   }
 
   function switchTab(view){
@@ -451,6 +474,7 @@
       progressBar.style.width='100%';setStatus('Done!','success',100);
       var text=getTranscriptText(data);
       showTranscript(text,data,elapsed);
+      updateUsagePill(data.usage);
       saveTranscript(text, data, elapsed);
     }catch(err){
       progressBar.style.width='0%';setStatus('Error: '+err.message,'error');showToast('Transcription failed');
@@ -614,6 +638,7 @@
       return res.json();
     }).then(function(user) {
       showUser(user.firstName || user.email);
+      updateUsagePill(user.usage);
     }).catch(function() {
       window.location.href = '/login.html?next=%2Fapp.html';
     });
@@ -632,6 +657,7 @@
       localStorage.removeItem('vc_token'); loadUserFromCookie(); return;
     }
     showUser(payload.name || payload.email);
+    refreshUsage();
   } catch(e) { localStorage.removeItem('vc_token'); }
 })();
 function vcLogout() {

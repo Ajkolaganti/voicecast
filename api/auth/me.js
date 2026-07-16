@@ -6,6 +6,7 @@
 
 import { getDb, COLLECTIONS }   from '../../lib/firebase.js';
 import { requireAuth, setCors } from '../../lib/auth.js';
+import { getTranscriptionUsage } from '../../lib/usage.js';
 
 export const config = { api: { bodyParser: false } };
 
@@ -24,6 +25,8 @@ export default async function handler(req, res) {
   if (!snap.exists) return res.status(404).json({ error: 'User not found.' });
 
   const u = snap.data();
+  const usage = await getTranscriptionUsage(db, payload.sub);
+
   return res.status(200).json({
     id:          snap.id,
     email:       u.email,
@@ -32,5 +35,6 @@ export default async function handler(req, res) {
     promoConsent: u.promoConsent,
     createdAt:   u.createdAt?.toDate?.()?.toISOString()  ?? null,
     lastLoginAt: u.lastLoginAt?.toDate?.()?.toISOString() ?? null,
+    usage,
   });
 }
