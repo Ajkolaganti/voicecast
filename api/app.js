@@ -21,7 +21,9 @@ export default async function handler(req, res) {
   try {
     const html = await readFile(APP_HTML, 'utf8');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('Cache-Control', 'private, no-store, no-cache, max-age=0, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     if (req.method === 'HEAD') return res.end();
     return res.status(200).send(html);
   } catch (err) {

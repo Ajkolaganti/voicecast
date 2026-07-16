@@ -364,6 +364,7 @@
       loadMoreHistoryBtn.style.display=historyHasMore?'block':'none';
       historyLoaded=true;
     }catch(err){
+      console.warn('[history] load failed:', err.message);
       if(reset)historyList.innerHTML='<div class="history-empty">Could not load history. Try again in a moment.</div>';
       showToast('History failed');
     }finally{
@@ -408,6 +409,7 @@
       showTranscript(text,data,data.duration?Number(data.duration).toFixed(1):null);
       switchTab('transcribe');
     }catch(err){
+      console.warn('[history] open failed:', err.message);
       showToast('Could not open transcript');
     }
   }
@@ -421,6 +423,7 @@
       showToast('Deleted');
       loadHistory(true);
     }catch(err){
+      console.warn('[history] delete failed:', err.message);
       showToast('Delete failed');
     }
   }
