@@ -39,6 +39,7 @@ Edit `protected/app.html` for authenticated app UI changes and `public/index.htm
 | `POST` | `/api/auth/login` | Log in and set the session cookie |
 | `POST` | `/api/auth/signup` | Create an account and set the session cookie |
 | `POST` | `/api/auth/google` | Verify Google ID token and set the session cookie |
+| `GET` | `/api/auth/firebase-token` | Exchange the current session for a Firebase Auth custom token |
 | `POST` | `/api/auth/logout` | Clear the session cookie |
 | `GET` | `/api/auth/me` | Return the authenticated user profile |
 
@@ -50,7 +51,17 @@ Required for auth and persistence:
 - `FIREBASE_PROJECT_ID`
 - `FIREBASE_CLIENT_EMAIL`
 - `FIREBASE_PRIVATE_KEY`
+- `FIREBASE_WEB_API_KEY` — public Firebase web app API key for browser Firestore history
+- `FIREBASE_AUTH_DOMAIN` — usually `<project-id>.firebaseapp.com`
 - `GOOGLE_CLIENT_ID` — OAuth web client ID used by Google Identity Services
+
+Transcript history is saved directly from the authenticated browser session to Firestore at:
+
+```
+users/{uid}/transcripts/{transcriptId}
+```
+
+Deploy `firestore.rules` so each Firebase Auth user can only read and write their own transcript history.
 
 ### POST /api/transcribe
 

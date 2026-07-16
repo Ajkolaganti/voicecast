@@ -237,6 +237,9 @@
   </footer>
 </div>
 <div class="toast" id="toast"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
 <script>
   var dropZone=document.getElementById('dropZone'),fileInput=document.getElementById('fileInput'),
   fileName=document.getElementById('fileName'),uploadLabel=document.getElementById('uploadLabel'),
@@ -254,7 +257,8 @@
   historyPanel=document.getElementById('historyPanel'),historyList=document.getElementById('historyList'),
   refreshHistoryBtn=document.getElementById('refreshHistoryBtn'),loadMoreHistoryBtn=document.getElementById('loadMoreHistoryBtn');
   var selectedFile=null,transcriptData=null,transcriptFileName='transcript',startTime=0;
-  var historyPage=1,historyHasMore=false,historyLoading=false,historyLoaded=false;
+  var historyCursor=null,historyHasMore=false,historyLoading=false,historyLoaded=false,historyCache={};
+  var firebaseClientPromise=null;
 
   async function checkHealth(){
     try{
@@ -316,22 +320,47 @@
     if(showingHistory&&!historyLoaded)loadHistory(true);
   }
 
+  async function getFirebaseClient(){
+    if(firebaseClientPromise)return firebaseClientPromise;
+    firebaseClientPromise=(async function(){
+      if(!window.firebase)throw new Error('Firebase SDK unavailable');
+      var r=await fetch('/api/auth/firebase-token',{headers:authHeaders()});
+      if(!r.ok){var msg='Firebase history unavailable';try{var e=await r.json();msg=e.error||msg;}catch{}throw new Error(msg);}
+      var data=await r.json();
+      if(!firebase.apps.length)firebase.initializeApp(data.firebaseConfig);
+      var auth=firebase.auth();
+      var current=auth.currentUser;
+      if(!current||current.uid!==data.uid){
+        var credential=await auth.signInWithCustomToken(data.token);
+        current=credential.user;
+      }
+      var db=firebase.firestore();
+      return {
+        uid: current.uid,
+        db: db,
+        transcripts: db.collection('users').doc(current.uid).collection('transcripts')
+      };
+    })().catch(function(err){firebaseClientPromise=null;throw err;});
+    return firebaseClientPromise;
+  }
+
   async function loadHistory(reset){
     if(historyLoading)return;
-    if(reset){historyPage=1;historyHasMore=false;}
+    if(reset){historyCursor=null;historyHasMore=false;historyCache={};}
     if(!reset&&!historyHasMore)return;
     historyLoading=true;
     loadMoreHistoryBtn.disabled=true;
     loadMoreHistoryBtn.textContent='Loading...';
     if(reset)historyList.innerHTML='<div class="history-empty">Loading transcripts...</div>';
     try{
-      var r=await fetch('/api/transcripts?page='+historyPage+'&limit=10',{headers:authHeaders()});
-      if(!r.ok)throw new Error('History unavailable');
-      var data=await r.json();
-      renderHistory(data.results||[],reset);
-      var page=data.pagination||{};
-      historyHasMore=(page.page||historyPage)<(page.pages||0);
-      historyPage=(page.page||historyPage)+1;
+      var client=await getFirebaseClient();
+      var query=client.transcripts.orderBy('createdAt','desc').limit(10);
+      if(!reset&&historyCursor)query=query.startAfter(historyCursor);
+      var snap=await query.get();
+      var items=snap.docs.map(toHistoryItem);
+      renderHistory(items,reset);
+      historyCursor=snap.docs.length?snap.docs[snap.docs.length-1]:historyCursor;
+      historyHasMore=snap.docs.length===10;
       loadMoreHistoryBtn.style.display=historyHasMore?'block':'none';
       historyLoaded=true;
     }catch(err){
@@ -351,6 +380,7 @@
       return;
     }
     historyList.insertAdjacentHTML('beforeend',items.map(function(item){
+      historyCache[item.id]=item;
       var wordsText=item.wordCount?item.wordCount+' words':'Transcript';
       var lang=item.language||'auto';
       var model=item.model||'default';
@@ -366,9 +396,13 @@
   async function openHistoryTranscript(id){
     if(!id)return;
     try{
-      var r=await fetch('/api/transcripts/'+encodeURIComponent(id),{headers:authHeaders()});
-      if(!r.ok)throw new Error('Transcript unavailable');
-      var data=await r.json();
+      var data=historyCache[id];
+      if(!data){
+        var client=await getFirebaseClient();
+        var snap=await client.transcripts.doc(id).get();
+        if(!snap.exists)throw new Error('Transcript unavailable');
+        data=toHistoryItem(snap);
+      }
       var text=getTranscriptText(data);
       transcriptFileName=data.fileName||'transcript';
       showTranscript(text,data,data.duration?Number(data.duration).toFixed(1):null);
@@ -381,8 +415,9 @@
   async function deleteHistoryTranscript(id){
     if(!id||!confirm('Delete this transcript?'))return;
     try{
-      var r=await fetch('/api/transcripts/'+encodeURIComponent(id),{method:'DELETE',headers:authHeaders()});
-      if(!r.ok)throw new Error('Delete failed');
+      var client=await getFirebaseClient();
+      await client.transcripts.doc(id).delete();
+      delete historyCache[id];
       showToast('Deleted');
       loadHistory(true);
     }catch(err){
@@ -425,20 +460,57 @@
 
   async function saveTranscript(text, data, elapsed) {
     try {
-      var res=await fetch('/api/transcripts', {
-        method: 'POST',
-        headers: authHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({
-          fileName: selectedFile ? selectedFile.name : 'recording',
-          fileSize: selectedFile ? selectedFile.size : 0,
-          text: text,
-          language: data.language || langSelect.value || 'auto',
-          model: data.model || modelSelect.value || 'default',
-          duration: parseFloat(elapsed) || 0
-        })
-      });
-      if(res.ok&&historyLoaded)loadHistory(true);
-    } catch(e) { /* silent - saving history is best-effort */ }
+      var cleanText=(text||'').trim();
+      if(!cleanText)return;
+      var client=await getFirebaseClient();
+      var doc={
+        userId: client.uid,
+        fileName: selectedFile ? selectedFile.name : 'recording',
+        fileSize: selectedFile ? selectedFile.size : 0,
+        text: cleanText,
+        preview: makePreview(cleanText),
+        wordCount: words(cleanText),
+        language: data.language || langSelect.value || 'auto',
+        model: data.model || modelSelect.value || 'default',
+        duration: parseFloat(elapsed) || 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      await client.transcripts.add(doc);
+      if(historyLoaded)loadHistory(true);
+    } catch(e) {
+      console.warn('[history] save failed:', e.message);
+      showToast('Could not save history');
+    }
+  }
+
+  function toHistoryItem(doc){
+    var data=doc.data()||{};
+    return {
+      id: doc.id,
+      fileName: data.fileName||'recording',
+      fileSize: data.fileSize||0,
+      text: data.text||'',
+      preview: data.preview||makePreview(data.text||''),
+      wordCount: data.wordCount||words(data.text||''),
+      language: data.language||'auto',
+      model: data.model||'default',
+      duration: data.duration||0,
+      createdAt: timestampToIso(data.createdAt),
+      updatedAt: timestampToIso(data.updatedAt)
+    };
+  }
+
+  function timestampToIso(value){
+    if(!value)return null;
+    if(typeof value.toDate==='function')return value.toDate().toISOString();
+    if(value.seconds)return new Date(value.seconds*1000).toISOString();
+    return value;
+  }
+
+  function makePreview(text){
+    var clean=cleanLine(text);
+    return clean.length>200?clean.slice(0,200)+'\u2026':clean;
   }
 
   function showTranscript(text,data,elapsed){
