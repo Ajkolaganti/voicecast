@@ -1,8 +1,8 @@
 /**
  * POST /api/auth/google
- * Body: { credential, promoConsent? }
+ * Body: { credential, accessToken, promoConsent? }
  *
- * Verifies a Google Identity Services ID token, creates or links the user by
+ * Verifies a Google Identity Services token, creates or links the user by
  * email, then issues the same VoiceCast JWT session used by password auth.
  */
 
@@ -21,12 +21,12 @@ function emailToKey(email) {
   return email.replace(/\./g, ',');
 }
 
-function splitName(payload) {
-  const given = (payload.given_name || '').trim();
-  const family = (payload.family_name || '').trim();
+function splitName(profile) {
+  const given = (profile.given_name || '').trim();
+  const family = (profile.family_name || '').trim();
   if (given) return { firstName: given, lastName: family };
 
-  const parts = (payload.name || '').trim().split(/\s+/).filter(Boolean);
+  const parts = (profile.name || '').trim().split(/\s+/).filter(Boolean);
   return {
     firstName: parts[0] || 'Google',
     lastName: parts.slice(1).join(' '),
@@ -44,6 +44,43 @@ function publicUser(uid, user) {
   };
 }
 
+async function verifyAccessToken(accessToken) {
+  const tokenInfo = await googleClient.getTokenInfo(accessToken);
+  const audience = tokenInfo.aud || tokenInfo.audience;
+  if (audience && audience !== GOOGLE_CLIENT_ID) {
+    throw new Error('GOOGLE_AUDIENCE_MISMATCH');
+  }
+
+  const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!profileRes.ok) throw new Error('GOOGLE_PROFILE_LOOKUP_FAILED');
+
+  const profile = await profileRes.json();
+  return {
+    sub: profile.sub || tokenInfo.sub || tokenInfo.user_id,
+    email: profile.email || tokenInfo.email,
+    email_verified: Boolean(profile.email_verified ?? tokenInfo.email_verified ?? tokenInfo.verified_email),
+    given_name: profile.given_name || '',
+    family_name: profile.family_name || '',
+    name: profile.name || tokenInfo.email || '',
+    picture: profile.picture || null,
+  };
+}
+
+async function verifyGoogleProfile({ credential, accessToken }) {
+  if (credential) {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    return ticket.getPayload();
+  }
+
+  if (accessToken) return verifyAccessToken(accessToken);
+  return null;
+}
+
 export default async function handler(req, res) {
   setCors(res, 'POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -52,27 +89,23 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'Google Sign-In is not configured.' });
   }
 
-  const { credential, promoConsent = false } = req.body || {};
-  if (!credential) return res.status(400).json({ error: 'Missing Google credential.' });
+  const { credential, accessToken, promoConsent = false } = req.body || {};
+  if (!credential && !accessToken) return res.status(400).json({ error: 'Missing Google credential.' });
 
-  let payload;
+  let profile;
   try {
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: GOOGLE_CLIENT_ID,
-    });
-    payload = ticket.getPayload();
+    profile = await verifyGoogleProfile({ credential, accessToken });
   } catch (err) {
     console.error('[google auth] token verification failed:', err.message);
     return res.status(401).json({ error: 'Google sign-in could not be verified.' });
   }
 
-  if (!payload?.email || !payload.email_verified) {
+  if (!profile?.email || !profile.email_verified) {
     return res.status(401).json({ error: 'Google account email must be verified.' });
   }
 
-  const emailClean = payload.email.toLowerCase().trim();
-  const { firstName, lastName } = splitName(payload);
+  const emailClean = profile.email.toLowerCase().trim();
+  const { firstName, lastName } = splitName(profile);
 
   let db;
   try { db = getDb(); } catch (err) {
@@ -97,8 +130,8 @@ export default async function handler(req, res) {
 
         const existing = userSnap.data();
         const updates = {
-          googleId: payload.sub,
-          googlePicture: payload.picture || null,
+          googleId: profile.sub,
+          googlePicture: profile.picture || null,
           emailVerified: true,
           authProviders: FieldValue.arrayUnion('google'),
           lastLoginAt: now,
@@ -126,8 +159,8 @@ export default async function handler(req, res) {
         lastName,
         email: emailClean,
         promoConsent: Boolean(promoConsent),
-        googleId: payload.sub,
-        googlePicture: payload.picture || null,
+        googleId: profile.sub,
+        googlePicture: profile.picture || null,
         emailVerified: true,
         authProviders: ['google'],
         createdAt: now,
