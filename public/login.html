@@ -23,8 +23,9 @@
     .forgot-row{display:flex;justify-content:flex-end;}
     .forgot-link{font-family:var(--mono);font-size:10px;color:var(--muted);text-decoration:none;}
     .forgot-link:hover{color:var(--lime);}
-    .google-auth{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
-    .google-button-shell{min-height:44px;display:flex;justify-content:center;}
+    .google-auth{display:flex;flex-direction:column;gap:12px;margin-bottom:22px;padding:14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:linear-gradient(135deg,var(--lime-glow2),rgba(202,255,60,0.015));}
+    .google-auth-label{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--lime);letter-spacing:1.5px;text-align:center;text-transform:uppercase;}
+    .google-button-shell{min-height:44px;display:flex;justify-content:center;border-radius:10px;overflow:hidden;}
     .google-terms{font-size:11px;color:var(--muted);line-height:1.5;text-align:center;}
     .google-terms a{color:var(--lime);text-decoration:none;}
   </style>
@@ -42,6 +43,7 @@
     <p class="auth-subtitle">Log in to access your transcription history and settings.</p>
     <div id="alertBox" style="display:none;margin-bottom:16px;"></div>
     <div class="google-auth" id="googleAuthWrap">
+      <p class="google-auth-label">// quick access</p>
       <div class="google-button-shell" id="googleLoginButton"></div>
       <p class="google-terms">By continuing with Google, you agree to the <a href="/terms.html" target="_blank">Terms</a> and <a href="/privacy.html" target="_blank">Privacy Policy</a>.</p>
     </div>
@@ -167,10 +169,10 @@
             callback: handleGoogleCredential
           });
           google.accounts.id.renderButton(document.getElementById('googleLoginButton'), {
-            theme: 'filled_black',
+            theme: 'outline',
             size: 'large',
             type: 'standard',
-            shape: 'rectangular',
+            shape: 'pill',
             text: 'signin_with',
             width: 336
           });

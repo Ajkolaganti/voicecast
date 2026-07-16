@@ -32,8 +32,9 @@
     .success-icon{width:56px;height:56px;background:var(--lime-glow);border:1.5px solid var(--lime);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--lime);}
     .success-title{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--white);}
     .success-sub{font-size:14px;color:var(--muted);line-height:1.6;}
-    .google-auth{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
-    .google-button-shell{min-height:44px;display:flex;justify-content:center;}
+    .google-auth{display:flex;flex-direction:column;gap:12px;margin-bottom:22px;padding:14px;border:1px solid var(--border2);border-radius:var(--r-sm);background:linear-gradient(135deg,var(--lime-glow2),rgba(202,255,60,0.015));}
+    .google-auth-label{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--lime);letter-spacing:1.5px;text-align:center;text-transform:uppercase;}
+    .google-button-shell{min-height:44px;display:flex;justify-content:center;border-radius:10px;overflow:hidden;}
     .google-terms{font-size:11px;color:var(--muted);line-height:1.5;text-align:center;}
     .google-terms a{color:var(--lime);text-decoration:none;}
   </style>
@@ -51,6 +52,7 @@
     <p class="auth-subtitle" id="cardSub">Free to start. No credit card required.</p>
     <div id="alertBox" style="display:none;margin-bottom:16px;"></div>
     <div class="google-auth" id="googleAuthWrap">
+      <p class="google-auth-label">// quick access</p>
       <div class="google-button-shell" id="googleSignupButton"></div>
       <p class="google-terms">Check the required permissions below, then continue with Google.</p>
     </div>
@@ -132,7 +134,7 @@
       if(!config.clientId)return hideGoogleAuth();
       waitForGoogle(function(){
         google.accounts.id.initialize({client_id:config.clientId,callback:handleGoogleCredential});
-        google.accounts.id.renderButton(document.getElementById('googleSignupButton'),{theme:'filled_black',size:'large',type:'standard',shape:'rectangular',text:'signup_with',width:356});
+        google.accounts.id.renderButton(document.getElementById('googleSignupButton'),{theme:'outline',size:'large',type:'standard',shape:'pill',text:'signup_with',width:356});
       });
     }).catch(hideGoogleAuth);
   }
